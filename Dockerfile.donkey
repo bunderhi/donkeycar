@@ -1,0 +1,50 @@
+
+ARG BASE_IMAGE=l4t-ml:r32.4.2-py3
+FROM ${BASE_IMAGE}
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-key adv --keyserver keys.gnupg.net --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE; 
+RUN echo  "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo bionic main" >> /etc/apt/sources.list.d/realsense.list 
+RUN apt-get update
+RUN apt-get install librealsense2-utils librealsense2-dev -y
+
+RUN useradd --shell /bin/bash -u 1000 -c "" -m brian && usermod -a -G dialout brian
+# enable i2c permissions
+RUN usermod -aG i2c brian
+# setup Jetson.GPIO
+RUN python3 -m pip install git+https://github.com/NVIDIA/jetson-gpio.git
+RUN groupadd -f -r gpio
+RUN usermod -a -G gpio brian
+#
+# Servo controller py libs
+RUN pip3 install adafruit-blinka
+RUN pip3 install adafruit-circuitpython-pca9685
+RUN pip3 install adafruit-circuitpython-servokit
+#
+# jetracer 
+RUN python3 -m pip install git+https://github.com/bunderhi/jetracer.git
+
+WORKDIR /app
+
+# install donkey
+ADD ./setup.py /app/setup.py
+ADD ./README.md /app/README.md
+RUN pip3 install -e .[nano]
+
+#Add the whole app dir after install so the pip install isn't updated when code changes.
+ADD . /app
+
+#port for donkeycar
+EXPOSE 8887
+#port for jupyter notebook
+EXPOSE 8888
+
+#COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+#ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+CMD /bin/bash -c "jupyter lab --ip 0.0.0.0 --port 8888 --allow-root &> /var/log/jupyter.log" & \
+        echo "allow 10 sec for JupyterLab to start @ http://localhost:8888 (password nvidia)" && \
+        echo "JupterLab logging location:  /var/log/jupyter.log  (inside the container)" && \
+        /bin/bash
+
