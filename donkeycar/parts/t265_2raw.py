@@ -35,9 +35,9 @@ cfg.enable_stream(rs.stream.fisheye, 1)
 cfg.enable_stream(rs.stream.fisheye, 2)
 
 pipe.start(cfg)
+WINDOW_TITLE = 'Realsense'
+cv2.namedWindow(WINDOW_TITLE, cv2.WINDOW_NORMAL)
 
-cv2.namedWindow('left', cv2.WINDOW_NORMAL)
-cv2.namedWindow('left rectified', cv2.WINDOW_NORMAL)
 # Configure the OpenCV stereo algorithm. See
 # https://docs.opencv.org/3.4/d2/d85/classcv_1_1StereoSGBM.html for a
 # description of the parameters
