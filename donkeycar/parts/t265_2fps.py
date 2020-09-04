@@ -139,7 +139,7 @@ undistort_rectify = {"left"  : (lm1, lm2),
 
 try:
     print('Start Recording %s' %(str(dt.datetime.now())))
-	date_start = time.time()
+    date_start = time.time()
     for i in range(200):
         frames = pipe.wait_for_frames()
 
