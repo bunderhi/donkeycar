@@ -23,7 +23,7 @@ class RS_T265(object):
     """
     Returns R, T transform from src to dst
     """
-    def get_extrinsics(src, dst):
+    def get_extrinsics(self,src,dst):
         extrinsics = src.get_extrinsics_to(dst)
         R = np.reshape(extrinsics.rotation, [3,3]).T
         T = np.array(extrinsics.translation)
@@ -32,7 +32,7 @@ class RS_T265(object):
     """
     Returns a camera matrix K from librealsense intrinsics
     """
-    def camera_matrix(intrinsics):
+    def camera_matrix(self,intrinsics):
         return np.array([[intrinsics.fx,             0, intrinsics.ppx],
                         [            0, intrinsics.fy, intrinsics.ppy],
                         [            0,             0,              1]])
@@ -40,7 +40,7 @@ class RS_T265(object):
     """
     Returns the fisheye distortion from librealsense intrinsics
     """
-    def fisheye_distortion(intrinsics):
+    def fisheye_distortion(self,intrinsics):
         return np.array(intrinsics.coeffs[:4])
 
 
@@ -91,7 +91,7 @@ class RS_T265(object):
         # Configure the OpenCV stereo algorithm. See
         # https://docs.opencv.org/3.4/d2/d85/classcv_1_1StereoSGBM.html for a
         # description of the parameters
-        window_size = 5
+        #window_size = 5
         min_disp = 0
         # must be divisible by 16
         num_disp = 112 - min_disp
@@ -108,14 +108,14 @@ class RS_T265(object):
         print("Right camera:", intrinsics["right"])
 
         # Translate the intrinsics from librealsense into OpenCV
-        K_left  = camera_matrix(intrinsics["left"])
-        D_left  = fisheye_distortion(intrinsics["left"])
-        K_right = camera_matrix(intrinsics["right"])
-        D_right = fisheye_distortion(intrinsics["right"])
-        (width, height) = (intrinsics["left"].width, intrinsics["left"].height)
+        K_left  = self.camera_matrix(intrinsics["left"])
+        D_left  = self.fisheye_distortion(intrinsics["left"])
+        K_right = self.camera_matrix(intrinsics["right"])
+        D_right = self.fisheye_distortion(intrinsics["right"])
+        #(width, height) = (intrinsics["left"].width, intrinsics["left"].height)
 
         # Get the relative extrinsics between the left and right camera
-        (R, T) = get_extrinsics(streams["left"], streams["right"])
+        (R, T) = self.get_extrinsics(streams["left"], streams["right"])
         # We need to determine what focal length our undistorted images should have
         # in order to set up the camera matrices for initUndistortRectifyMap.  We
         # could use stereoRectify, but here we show how to derive these projection
@@ -158,7 +158,7 @@ class RS_T265(object):
 
         # Construct Q for use with cv2.reprojectImageTo3D. Subtract max_disp from x
         # since we will crop the disparity later
-        Q = np.array([[1, 0,       0, -(stereo_cx - max_disp)],
+        Q = np.array([[1, 0,       0, -(stereo_cx - self.max_disp)],
                         [0, 1,       0, -stereo_cy],
                         [0, 0,       0, stereo_focal_px],
                         [0, 0, -1/T[0], 0]])
@@ -199,8 +199,8 @@ class RS_T265(object):
             left = frames.get_fisheye_frame(1)
             left_data = np.asanyarray(left.get_data())
             left_undistorted = cv2.remap(src = left_data,
-                                       map1 = undistort_rectify["left"][0],
-                                       map2 = undistort_rectify["left"][1],
+                                       map1 = self.undistort_rectify["left"][0],
+                                       map2 = self.undistort_rectify["left"][1],
                                        interpolation = cv2.INTER_LINEAR)
             self.img = cv2.cvtColor(left_undistorted[:,self.max_disp:], cv2.COLOR_GRAY2RGB)
         # Fetch pose frame
