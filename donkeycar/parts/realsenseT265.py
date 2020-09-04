@@ -1,0 +1,243 @@
+'''
+Author: Tawn Kramer
+File: realsense2.py
+Date: April 14 2019
+Notes: Parts to input data from Intel Realsense 2 cameras
+'''
+import time
+import logging
+
+import numpy as np
+import cv2
+import os
+from math import tan, pi
+import pyrealsense2 as rs
+
+class RS_T265(object):
+    '''
+    The Intel Realsense T265 camera is a device which uses an imu, twin fisheye cameras,
+    and an Movidius chip to do sensor fusion and emit a world space coordinate frame that 
+    is remarkably consistent.
+    '''
+
+    """
+    Returns R, T transform from src to dst
+    """
+    def get_extrinsics(src, dst):
+        extrinsics = src.get_extrinsics_to(dst)
+        R = np.reshape(extrinsics.rotation, [3,3]).T
+        T = np.array(extrinsics.translation)
+        return (R, T)
+
+    """
+    Returns a camera matrix K from librealsense intrinsics
+    """
+    def camera_matrix(intrinsics):
+        return np.array([[intrinsics.fx,             0, intrinsics.ppx],
+                        [            0, intrinsics.fy, intrinsics.ppy],
+                        [            0,             0,              1]])
+
+    """
+    Returns the fisheye distortion from librealsense intrinsics
+    """
+    def fisheye_distortion(intrinsics):
+        return np.array(intrinsics.coeffs[:4])
+
+
+    def __init__(self, image_output=False, calib_filename=None):
+        # Using the image_output will grab two image streams from the fisheye cameras but return only one.
+        # This can be a bit much for USB2, but you can try it. Docs recommend USB3 connection for this.
+        self.image_output = image_output
+
+        # When we have and encoder, this will be the last vel measured. 
+        self.enc_vel_ms = 0.0
+        self.wheel_odometer = None
+
+        # Declare RealSense pipeline, encapsulating the actual device and sensors
+        print("starting T265")
+        self.pipe = rs.pipeline()
+        cfg = rs.config()
+        cfg.enable_stream(rs.stream.pose)
+        # bug workaround
+        #profile = cfg.resolve(self.pipe)
+        #dev = profile.get_device()
+        #tm2 = dev.as_tm2()
+        
+
+        if self.image_output:
+            cfg.enable_stream(rs.stream.fisheye, 1) # Left camera
+            cfg.enable_stream(rs.stream.fisheye, 2) # Right camera
+        #disable wheel odometery for now due to bug
+        #if calib_filename is not None:
+        #    pose_sensor = tm2.first_pose_sensor()
+        #    self.wheel_odometer = pose_sensor.as_wheel_odometer() 
+
+            # calibration to list of uint8
+        #    f = open(calib_filename)
+        #    chars = []
+        #    for line in f:
+        #        for c in line:
+        #            chars.append(ord(c))  # char to uint8
+
+            # load/configure wheel odometer
+            print("loading wheel config", calib_filename)
+        #    self.wheel_odometer.load_wheel_odometery_config(chars)   
+
+
+        # Start streaming with requested config
+        self.pipe.start(cfg)
+        self.running = True
+        print("Warning: T265 needs a warmup period of a few seconds before it will emit tracking data.")
+        # Configure the OpenCV stereo algorithm. See
+        # https://docs.opencv.org/3.4/d2/d85/classcv_1_1StereoSGBM.html for a
+        # description of the parameters
+        window_size = 5
+        min_disp = 0
+        # must be divisible by 16
+        num_disp = 112 - min_disp
+        self.max_disp = min_disp + num_disp
+        # Retreive the stream and intrinsic properties for both cameras
+        profiles = self.pipe.get_active_profile()
+        streams = {"left"  : profiles.get_stream(rs.stream.fisheye, 1).as_video_stream_profile(),
+                    "right" : profiles.get_stream(rs.stream.fisheye, 2).as_video_stream_profile()}
+        intrinsics = {"left"  : streams["left"].get_intrinsics(),
+                        "right" : streams["right"].get_intrinsics()}
+
+        # Print information about both cameras
+        print("Left camera:",  intrinsics["left"])
+        print("Right camera:", intrinsics["right"])
+
+        # Translate the intrinsics from librealsense into OpenCV
+        K_left  = camera_matrix(intrinsics["left"])
+        D_left  = fisheye_distortion(intrinsics["left"])
+        K_right = camera_matrix(intrinsics["right"])
+        D_right = fisheye_distortion(intrinsics["right"])
+        (width, height) = (intrinsics["left"].width, intrinsics["left"].height)
+
+        # Get the relative extrinsics between the left and right camera
+        (R, T) = get_extrinsics(streams["left"], streams["right"])
+        # We need to determine what focal length our undistorted images should have
+        # in order to set up the camera matrices for initUndistortRectifyMap.  We
+        # could use stereoRectify, but here we show how to derive these projection
+        # matrices from the calibration and a desired height and field of view
+
+        # We calculate the undistorted focal length:
+        #
+        #         h
+        # -----------------
+        #  \      |      /
+        #    \    | f  /
+        #     \   |   /
+        #      \ fov /
+        #        \|/
+        stereo_fov_rad = 90 * (pi/180)  # 90 degree desired fov
+        stereo_height_px = 300          # 300x300 pixel stereo output
+        stereo_focal_px = stereo_height_px/2 / tan(stereo_fov_rad/2)
+
+        # We set the left rotation to identity and the right rotation
+        # the rotation between the cameras
+        R_left = np.eye(3)
+        R_right = R
+
+        # The stereo algorithm needs max_disp extra pixels in order to produce valid
+        # disparity on the desired output region. This changes the width, but the
+        # center of projection should be on the center of the cropped image
+        stereo_width_px = stereo_height_px + self.max_disp
+        stereo_size = (stereo_width_px, stereo_height_px)
+        stereo_cx = (stereo_height_px - 1)/2 + self.max_disp
+        stereo_cy = (stereo_height_px - 1)/2
+
+        # Construct the left and right projection matrices, the only difference is
+        # that the right projection matrix should have a shift along the x axis of
+        # baseline*focal_length
+        P_left = np.array([[stereo_focal_px, 0, stereo_cx, 0],
+                            [0, stereo_focal_px, stereo_cy, 0],
+                            [0,               0,         1, 0]])
+        P_right = P_left.copy()
+        P_right[0][3] = T[0]*stereo_focal_px
+
+        # Construct Q for use with cv2.reprojectImageTo3D. Subtract max_disp from x
+        # since we will crop the disparity later
+        Q = np.array([[1, 0,       0, -(stereo_cx - max_disp)],
+                        [0, 1,       0, -stereo_cy],
+                        [0, 0,       0, stereo_focal_px],
+                        [0, 0, -1/T[0], 0]])
+
+        # Create an undistortion map for the left and right camera which applies the
+        # rectification and undoes the camera distortion. This only has to be done
+        # once
+        m1type = cv2.CV_32FC1
+        (lm1, lm2) = cv2.fisheye.initUndistortRectifyMap(K_left, D_left, R_left, P_left, stereo_size, m1type)
+        (rm1, rm2) = cv2.fisheye.initUndistortRectifyMap(K_right, D_right, R_right, P_right, stereo_size, m1type)
+        self.undistort_rectify = {"left"  : (lm1, lm2),
+                            "right" : (rm1, rm2)}
+        zero_vec = (0.0, 0.0, 0.0)
+        self.pos = zero_vec
+        self.vel = zero_vec
+        self.acc = zero_vec
+        self.img = None
+
+    def poll(self):
+
+        if self.wheel_odometer:
+            wo_sensor_id = 0  # indexed from 0, match to order in calibration file
+            frame_num = 0  # not used
+            v = rs.vector()
+            v.x = -1.0 * self.enc_vel_ms  # m/s
+            #v.z = -1.0 * self.enc_vel_ms  # m/s
+            self.wheel_odometer.send_wheel_odometry(wo_sensor_id, frame_num, v)
+
+        try:
+            frames = self.pipe.wait_for_frames()
+        except Exception as e:
+            logging.error(e)
+            return
+
+        if self.image_output:
+            #We will just get one image for now.
+            # Left fisheye camera frame
+            left = frames.get_fisheye_frame(1)
+            left_data = np.asanyarray(left.get_data())
+            left_undistorted = cv2.remap(src = left_data,
+                                       map1 = undistort_rectify["left"][0],
+                                       map2 = undistort_rectify["left"][1],
+                                       interpolation = cv2.INTER_LINEAR)
+            self.img = cv2.cvtColor(left_undistorted[:,self.max_disp:], cv2.COLOR_GRAY2RGB)
+        # Fetch pose frame
+        pose = frames.get_pose_frame()
+
+        if pose:
+            data = pose.get_pose_data()
+            self.pos = data.translation
+            self.vel = data.velocity
+            self.acc = data.acceleration
+            logging.debug('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z))
+
+
+    def update(self):
+        while self.running:
+            self.poll()
+
+    def run_threaded(self, enc_vel_ms):
+        self.enc_vel_ms = enc_vel_ms
+        return self.pos, self.vel, self.acc, self.img
+
+    def run(self, enc_vel_ms):
+        self.enc_vel_ms = enc_vel_ms
+        self.poll()
+        return self.run_threaded()
+
+    def shutdown(self):
+        self.running = False
+        time.sleep(0.1)
+        self.pipe.stop()
+
+
+
+if __name__ == "__main__":
+    c = RS_T265()
+    while True:
+        pos, vel, acc = c.run()
+        print(pos)
+        time.sleep(0.1)
+    c.shutdown()
