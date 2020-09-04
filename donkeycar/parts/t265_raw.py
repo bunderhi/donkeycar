@@ -36,8 +36,8 @@ cfg.enable_stream(rs.stream.fisheye, 2)
 
 pipe.start(cfg)
 
-cv2.namedWindow('left', cv2.WINDOW_NORMAL)
-cv2.namedWindow('left rectified', cv2.WINDOW_NORMAL)
+#cv2.namedWindow('left', cv2.WINDOW_NORMAL)
+#cv2.namedWindow('left rectified', cv2.WINDOW_NORMAL)
 # Configure the OpenCV stereo algorithm. See
 # https://docs.opencv.org/3.4/d2/d85/classcv_1_1StereoSGBM.html for a
 # description of the parameters
@@ -128,16 +128,20 @@ try:
 
         left = frames.get_fisheye_frame(1)
         left_data = np.asanyarray(left.get_data())
-
-
+        dimleft = left_data.shape[:2]
         cv2.imshow('left', left_data)
 
         center_undistorted = cv2.remap(src = left_data,
                                        map1 = undistort_rectify["left"][0],
                                        map2 = undistort_rectify["left"][1],
                                        interpolation = cv2.INTER_LINEAR)
+       dimundistorted = center_undistorted.shape[:2]
+        
         cv2.imshow('left rectified', center_undistorted)
         cv2.waitKey(500)
+        
+    print ("Raw Image=" + str(dimleft[::-1]))
+    print ("Undistorted=" + str(dimundistorted[::-1]))
 
 finally:
     pipe.stop()
