@@ -144,7 +144,7 @@ try:
         right_data = np.asanyarray(right.get_data())
 
 
-        cv2.imshow('left', left_data)
+        #cv2.imshow('left', left_data)
 
         left_undistorted = cv2.remap(src = left_data,
                                        map1 = undistort_rectify["left"][0],
@@ -156,17 +156,20 @@ try:
                                        interpolation = cv2.INTER_LINEAR)
 
         # compute the disparity on the center of the frames and convert it to a pixel disparity (divide by DISP_SCALE=16)
-        disparity = stereo.compute(left_undistorted, right_undistorted).astype(np.float32) / 16.0
+        #disparity = stereo.compute(left_undistorted, right_undistorted).astype(np.float32) / 16.0
 
         # re-crop just the valid part of the disparity
-        disparity = disparity[:,max_disp:]
+        #disparity = disparity[:,max_disp:]
 
         # convert disparity to 0-255 and color it
-        disp_vis = 255*(disparity - min_disp)/ num_disp
-        disp_color = cv2.applyColorMap(cv2.convertScaleAbs(disp_vis,1), cv2.COLORMAP_JET)
+        #disp_vis = 255*(disparity - min_disp)/ num_disp
+        #disp_color = cv2.applyColorMap(cv2.convertScaleAbs(disp_vis,1), cv2.COLORMAP_JET)
         color_image = cv2.cvtColor(left_undistorted[:,max_disp:], cv2.COLOR_GRAY2RGB)
-
-        cv2.imshow(WINDOW_TITLE, np.hstack((color_image, disp_color)))
+        cv2.imshow("Left", left_undistorted)
+        cv2.imshow("Right", right_undistorted)
+        cv2.imshow("Cropped", color_image)
+        
+        #cv2.imshow(WINDOW_TITLE, np.hstack((color_image, disp_color)))
         #if mode == "overlay":
         #    ind = disparity >= min_disp
         #    color_image[ind, 0] = disp_color[ind, 0]
