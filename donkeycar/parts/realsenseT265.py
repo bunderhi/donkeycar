@@ -10,8 +10,14 @@ import logging
 import numpy as np
 import cv2
 import os
-from math import tan, pi
+from math import tan, pi, asin, atan2
 import pyrealsense2 as rs
+
+class RPY:
+    roll:    float
+    pitch:   float
+    yaw:     float
+
 
 class RS_T265(object):
     '''
@@ -43,6 +49,20 @@ class RS_T265(object):
     def fisheye_distortion(self,intrinsics):
         return np.array(intrinsics.coeffs[:4])
 
+    """
+    Returns roll, pitch, yaw for the camera
+    """
+    def translateEuler(self,eulervalues)
+        w = eulervalues.w
+        x = -eulervalues.z
+        y = eulervalues.x
+        z = -eulervalues.y
+
+        rot = RPY()
+        rot.pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi;
+        rot.roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi;
+        rot.yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi;
+        return(rot)
 
     def __init__(self, image_output=False, calib_filename=None):
         # Using the image_output will grab two image streams from the fisheye cameras but return only one.
@@ -189,10 +209,27 @@ class RS_T265(object):
 
         try:
             frames = self.pipe.wait_for_frames()
+            logging.info("Wait for frames complete")
         except Exception as e:
             logging.error(e)
             return
 
+        # Fetch pose frame
+        pose = frames.get_pose_frame()
+        logging.info("Fetch pose")
+        if pose:
+            data = pose.get_pose_data()
+            self.pos = data.translation
+            self.vel = data.velocity
+            self.acc = data.acceleration
+            self.rotation = data.rotation
+            logging.info('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z))
+
+            # Compute roll, pitch, and yaw
+            self.rpy = self.translateEuler(self.rotation)
+            
+            logging.info('realsense TranslateEuler(%f, %f, %f)' % (rpy.roll,rpy.pitch,rpy.yaw))
+        
         if self.image_output:
             #We will just get one image for now.
             # Left fisheye camera frame
@@ -203,16 +240,7 @@ class RS_T265(object):
                                        map2 = self.undistort_rectify["left"][1],
                                        interpolation = cv2.INTER_LINEAR)
             self.img = cv2.cvtColor(left_undistorted[:,self.max_disp:], cv2.COLOR_GRAY2RGB)
-        # Fetch pose frame
-        pose = frames.get_pose_frame()
-
-        if pose:
-            data = pose.get_pose_data()
-            self.pos = data.translation
-            self.vel = data.velocity
-            self.acc = data.acceleration
-            logging.debug('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z))
-
+            logging.info("Get image")
 
     def update(self):
         while self.running:
@@ -220,7 +248,7 @@ class RS_T265(object):
 
     def run_threaded(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms
-        return self.pos, self.vel, self.acc, self.img
+        return self.pos, self.vel, self.acc, self.rpy self.img
 
     def run(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms
