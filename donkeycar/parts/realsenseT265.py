@@ -187,6 +187,7 @@ class RS_T265(object):
         self.pos = zero_vec
         self.vel = zero_vec
         self.acc = zero_vec
+        self.rpy = zero_vec
         self.img = None
 
     def poll(self):
@@ -220,7 +221,7 @@ class RS_T265(object):
             # Compute roll, pitch, and yaw
             self.rpy = RPY(self.rotation)
             
-            logging.info('realsense RPandY(%f, %f, %f)' % (rpy.roll,rpy.pitch,rpy.yaw))
+            logging.info('realsense RPandY(%f, %f, %f)' % (self.rpy.roll,self.rpy.pitch,self.rpy.yaw))
         
         if self.image_output:
             #We will just get one image for now.
