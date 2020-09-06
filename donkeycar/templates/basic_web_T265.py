@@ -26,7 +26,7 @@ from donkeycar.parts.realsenseT265 import RS_T265
 from donkeycar.utils import *
 
 
-def drive(cfg):
+def drive(cfg,verbose=True):
     '''
     Construct a working robotic vehicle from many parts.
     Each part runs as a job in the Vehicle loop, calling either
@@ -113,11 +113,7 @@ if __name__ == '__main__':
     args = docopt(__doc__)
     cfg = dk.load_config()
 
-    log_level = args['--log'] or "INFO"
-    numeric_level = getattr(logging, log_level.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % log_level)
-    logging.basicConfig(level=numeric_level)
+    logging.basicConfig(level=10)
     
     if args['drive']:      
         drive(cfg)

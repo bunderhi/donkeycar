@@ -20,9 +20,9 @@ class RPY:
         y = rotation.x
         z = -rotation.y
 
-        self.pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi
-        self.roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi
-        self.yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi
+        self.pitch =  -asin(2.0 * (x*z - w*y)) * 180.0 / pi
+        self.roll  =  atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / pi
+        self.yaw   =  atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / pi
 
 
 class RS_T265(object):
