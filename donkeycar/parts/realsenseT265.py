@@ -240,7 +240,7 @@ class RS_T265(object):
 
     def run_threaded(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms
-        return self.pos, self.vel, self.acc, self.rpy self.img
+        return self.pos, self.vel, self.acc, self.rpy, self.img
 
     def run(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms
