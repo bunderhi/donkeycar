@@ -14,9 +14,15 @@ from math import tan, pi, asin, atan2
 import pyrealsense2 as rs
 
 class RPY:
-    roll:    float
-    pitch:   float
-    yaw:     float
+    def __init__(self, rotation):
+        w = rotation.w
+        x = -rotation.z
+        y = rotation.x
+        z = -rotation.y
+
+        self.pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi
+        self.roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi
+        self.yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi
 
 
 class RS_T265(object):
@@ -49,20 +55,6 @@ class RS_T265(object):
     def fisheye_distortion(self,intrinsics):
         return np.array(intrinsics.coeffs[:4])
 
-    """
-    Returns roll, pitch, yaw for the camera
-    """
-    def translateEuler(self,eulervalues)
-        w = eulervalues.w
-        x = -eulervalues.z
-        y = eulervalues.x
-        z = -eulervalues.y
-
-        rot = RPY()
-        rot.pitch =  -m.asin(2.0 * (x*z - w*y)) * 180.0 / m.pi;
-        rot.roll  =  m.atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / m.pi;
-        rot.yaw   =  m.atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / m.pi;
-        return(rot)
 
     def __init__(self, image_output=False, calib_filename=None):
         # Using the image_output will grab two image streams from the fisheye cameras but return only one.
@@ -226,9 +218,9 @@ class RS_T265(object):
             logging.info('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z))
 
             # Compute roll, pitch, and yaw
-            self.rpy = self.translateEuler(self.rotation)
+            self.rpy = RPY(self.rotation)
             
-            logging.info('realsense TranslateEuler(%f, %f, %f)' % (rpy.roll,rpy.pitch,rpy.yaw))
+            logging.info('realsense RPandY(%f, %f, %f)' % (rpy.roll,rpy.pitch,rpy.yaw))
         
         if self.image_output:
             #We will just get one image for now.
