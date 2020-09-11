@@ -43,7 +43,7 @@ def drive(cfg,verbose=True):
  
     V.add(LocalWebController(), 
           inputs=['cam/image'],
-          outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
+          outputs=['user/angle', 'user/throttle', 'user/mode', 'OLDrecording'],
           threaded=True)
 
     # we give the T265 no calib to indicated we don't have odom
@@ -55,6 +55,13 @@ def drive(cfg,verbose=True):
             return 0.0
 
     V.add(NoOdom(), outputs=['enc/vel_m_s'])
+
+    #This part hardwires recording to True   **Temporary***.
+    class Recording():
+        def run(self):
+            return True
+
+    V.add(Recording(), outputs=['recording'])  
 
     # This requires use of the Intel Realsense T265
     rs = RS_T265(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)
