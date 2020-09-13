@@ -20,6 +20,7 @@ import numpy as np
 
 import donkeycar as dk
 from donkeycar.parts.datastore import TubHandler
+from donkeycar.parts.camera import CSICamera
 from donkeycar.parts.controller import LocalWebController
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from donkeycar.parts.realsenseT265 import RS_T265
@@ -43,7 +44,7 @@ def drive(cfg,verbose=True):
  
     V.add(LocalWebController(), 
           inputs=['cam/image'],
-          outputs=['user/angle', 'user/throttle', 'user/mode', 'OLDrecording'],
+          outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
           threaded=True)
 
     # we give the T265 no calib to indicated we don't have odom
@@ -54,6 +55,10 @@ def drive(cfg,verbose=True):
         def run(self):
             return 0.0
 
+    # Wide Angle Camera 
+    cam = CSICamera(image_w=cfg.IMAGE_W, image_h=cfg.IMAGE_H, image_d=cfg.IMAGE_DEPTH, framerate=cfg.CAMERA_FRAMERATE, gstreamer_flip=cfg.CSIC_CAM_GSTREAMER_FLIP_PARM)
+    V.add(cam, inputs=[], outputs=['cam/image'], threaded=True)
+
     V.add(NoOdom(), outputs=['enc/vel_m_s'])
 
     #This part hardwires recording to True   **Temporary***.
@@ -61,11 +66,11 @@ def drive(cfg,verbose=True):
         def run(self):
             return True
 
-    V.add(Recording(), outputs=['recording'])  
+    #V.add(Recording(), outputs=['recording'])  
 
     # This requires use of the Intel Realsense T265
-    rs = RS_T265(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)
-    V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'cam/image'], threaded=True)
+    rs = RS_T265(image_output=False, calib_filename=cfg.WHEEL_ODOM_CALIB)
+    V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'noimage'], threaded=True)
 
     # Pull out the realsense T265 position stream, output 2d coordinates we can use to map.
     class PosStream:
@@ -120,7 +125,7 @@ if __name__ == '__main__':
     args = docopt(__doc__)
     cfg = dk.load_config()
 
-    logging.basicConfig(level=10)
+    logging.basicConfig(level=30)
     
     if args['drive']:      
         drive(cfg)
