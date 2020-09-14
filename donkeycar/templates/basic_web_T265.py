@@ -76,7 +76,8 @@ def drive(cfg,verbose=True):
     class PosStream:
         def run(self, pos):
             #y is up, x is right, z is backwards/forwards
-            if pos is None:
+            zero_vec = (0.0,0.0,0.0)
+            if pos == zero_vec:
                 return 0.0,0.0,0.0
             else:
                 return pos.x, pos.z, pos.y
@@ -86,7 +87,8 @@ def drive(cfg,verbose=True):
     class RPYStream:
         def run(self, rpy):
             #rpy - roll, pitch yaw
-            if rpy is None:
+            zero_vec = (0.0,0.0,0.0)
+            if rpy == zero_vec:
                 return 0.0,0.0,0.0
             else:
                 return rpy.roll, rpy.pitch, rpy.yaw
