@@ -79,110 +79,111 @@ class RS_T265(object):
         if self.image_output:
             cfg.enable_stream(rs.stream.fisheye, 1) # Left camera
             cfg.enable_stream(rs.stream.fisheye, 2) # Right camera
-        #disable wheel odometery for now due to bug
-        #if calib_filename is not None:
-        #    pose_sensor = tm2.first_pose_sensor()
-        #    self.wheel_odometer = pose_sensor.as_wheel_odometer() 
+            #disable wheel odometery for now due to bug
+            #if calib_filename is not None:
+            #    pose_sensor = tm2.first_pose_sensor()
+            #    self.wheel_odometer = pose_sensor.as_wheel_odometer() 
 
-            # calibration to list of uint8
-        #    f = open(calib_filename)
-        #    chars = []
-        #    for line in f:
-        #        for c in line:
-        #            chars.append(ord(c))  # char to uint8
+                # calibration to list of uint8
+            #    f = open(calib_filename)
+            #    chars = []
+            #    for line in f:
+            #        for c in line:
+            #            chars.append(ord(c))  # char to uint8
 
             # load/configure wheel odometer
             print("loading wheel config", calib_filename)
-        #    self.wheel_odometer.load_wheel_odometery_config(chars)   
+            #    self.wheel_odometer.load_wheel_odometery_config(chars)   
 
 
         # Start streaming with requested config
         self.pipe.start(cfg)
         self.running = True
-        print("Warning: T265 needs a warmup period of a few seconds before it will emit tracking data.")
-        # Configure the OpenCV stereo algorithm. See
-        # https://docs.opencv.org/3.4/d2/d85/classcv_1_1StereoSGBM.html for a
-        # description of the parameters
-        #window_size = 5
-        min_disp = 0
-        # must be divisible by 16
-        num_disp = 112 - min_disp
-        self.max_disp = min_disp + num_disp
-        # Retreive the stream and intrinsic properties for both cameras
-        profiles = self.pipe.get_active_profile()
-        streams = {"left"  : profiles.get_stream(rs.stream.fisheye, 1).as_video_stream_profile(),
-                    "right" : profiles.get_stream(rs.stream.fisheye, 2).as_video_stream_profile()}
-        intrinsics = {"left"  : streams["left"].get_intrinsics(),
-                        "right" : streams["right"].get_intrinsics()}
+            print("Warning: T265 needs a warmup period of a few seconds before it will emit tracking data.")
+        if self.image_output:
+            # Configure the OpenCV stereo algorithm. See
+            # https://docs.opencv.org/3.4/d2/d85/classcv_1_1StereoSGBM.html for a
+            # description of the parameters
+            #window_size = 5
+            min_disp = 0
+            # must be divisible by 16
+            num_disp = 112 - min_disp
+            self.max_disp = min_disp + num_disp
+            # Retreive the stream and intrinsic properties for both cameras
+            profiles = self.pipe.get_active_profile()
+            streams = {"left"  : profiles.get_stream(rs.stream.fisheye, 1).as_video_stream_profile(),
+                        "right" : profiles.get_stream(rs.stream.fisheye, 2).as_video_stream_profile()}
+            intrinsics = {"left"  : streams["left"].get_intrinsics(),
+                            "right" : streams["right"].get_intrinsics()}
 
-        # Print information about both cameras
-        print("Left camera:",  intrinsics["left"])
-        print("Right camera:", intrinsics["right"])
+            # Print information about both cameras
+            print("Left camera:",  intrinsics["left"])
+            print("Right camera:", intrinsics["right"])
 
-        # Translate the intrinsics from librealsense into OpenCV
-        K_left  = self.camera_matrix(intrinsics["left"])
-        D_left  = self.fisheye_distortion(intrinsics["left"])
-        K_right = self.camera_matrix(intrinsics["right"])
-        D_right = self.fisheye_distortion(intrinsics["right"])
-        #(width, height) = (intrinsics["left"].width, intrinsics["left"].height)
+            # Translate the intrinsics from librealsense into OpenCV
+            K_left  = self.camera_matrix(intrinsics["left"])
+            D_left  = self.fisheye_distortion(intrinsics["left"])
+            K_right = self.camera_matrix(intrinsics["right"])
+            D_right = self.fisheye_distortion(intrinsics["right"])
+            #(width, height) = (intrinsics["left"].width, intrinsics["left"].height)
 
-        # Get the relative extrinsics between the left and right camera
-        (R, T) = self.get_extrinsics(streams["left"], streams["right"])
-        # We need to determine what focal length our undistorted images should have
-        # in order to set up the camera matrices for initUndistortRectifyMap.  We
-        # could use stereoRectify, but here we show how to derive these projection
-        # matrices from the calibration and a desired height and field of view
+            # Get the relative extrinsics between the left and right camera
+            (R, T) = self.get_extrinsics(streams["left"], streams["right"])
+            # We need to determine what focal length our undistorted images should have
+            # in order to set up the camera matrices for initUndistortRectifyMap.  We
+            # could use stereoRectify, but here we show how to derive these projection
+            # matrices from the calibration and a desired height and field of view
 
-        # We calculate the undistorted focal length:
-        #
-        #         h
-        # -----------------
-        #  \      |      /
-        #    \    | f  /
-        #     \   |   /
-        #      \ fov /
-        #        \|/
-        stereo_fov_rad = 90 * (pi/180)  # 90 degree desired fov
-        stereo_height_px = 300          # 300x300 pixel stereo output
-        stereo_focal_px = stereo_height_px/2 / tan(stereo_fov_rad/2)
+            # We calculate the undistorted focal length:
+            #
+            #         h
+            # -----------------
+            #  \      |      /
+            #    \    | f  /
+            #     \   |   /
+            #      \ fov /
+            #        \|/
+            stereo_fov_rad = 90 * (pi/180)  # 90 degree desired fov
+            stereo_height_px = 300          # 300x300 pixel stereo output
+            stereo_focal_px = stereo_height_px/2 / tan(stereo_fov_rad/2)
 
-        # We set the left rotation to identity and the right rotation
-        # the rotation between the cameras
-        R_left = np.eye(3)
-        R_right = R
+            # We set the left rotation to identity and the right rotation
+            # the rotation between the cameras
+            R_left = np.eye(3)
+            R_right = R
 
-        # The stereo algorithm needs max_disp extra pixels in order to produce valid
-        # disparity on the desired output region. This changes the width, but the
-        # center of projection should be on the center of the cropped image
-        stereo_width_px = stereo_height_px + self.max_disp
-        stereo_size = (stereo_width_px, stereo_height_px)
-        stereo_cx = (stereo_height_px - 1)/2 + self.max_disp
-        stereo_cy = (stereo_height_px - 1)/2
+            # The stereo algorithm needs max_disp extra pixels in order to produce valid
+            # disparity on the desired output region. This changes the width, but the
+            # center of projection should be on the center of the cropped image
+            stereo_width_px = stereo_height_px + self.max_disp
+            stereo_size = (stereo_width_px, stereo_height_px)
+            stereo_cx = (stereo_height_px - 1)/2 + self.max_disp
+            stereo_cy = (stereo_height_px - 1)/2
 
-        # Construct the left and right projection matrices, the only difference is
-        # that the right projection matrix should have a shift along the x axis of
-        # baseline*focal_length
-        P_left = np.array([[stereo_focal_px, 0, stereo_cx, 0],
-                            [0, stereo_focal_px, stereo_cy, 0],
-                            [0,               0,         1, 0]])
-        P_right = P_left.copy()
-        P_right[0][3] = T[0]*stereo_focal_px
+            # Construct the left and right projection matrices, the only difference is
+            # that the right projection matrix should have a shift along the x axis of
+            # baseline*focal_length
+            P_left = np.array([[stereo_focal_px, 0, stereo_cx, 0],
+                                [0, stereo_focal_px, stereo_cy, 0],
+                                [0,               0,         1, 0]])
+            P_right = P_left.copy()
+            P_right[0][3] = T[0]*stereo_focal_px
 
-        # Construct Q for use with cv2.reprojectImageTo3D. Subtract max_disp from x
-        # since we will crop the disparity later
-        Q = np.array([[1, 0,       0, -(stereo_cx - self.max_disp)],
-                        [0, 1,       0, -stereo_cy],
-                        [0, 0,       0, stereo_focal_px],
-                        [0, 0, -1/T[0], 0]])
+            # Construct Q for use with cv2.reprojectImageTo3D. Subtract max_disp from x
+            # since we will crop the disparity later
+            Q = np.array([[1, 0,       0, -(stereo_cx - self.max_disp)],
+                            [0, 1,       0, -stereo_cy],
+                            [0, 0,       0, stereo_focal_px],
+                            [0, 0, -1/T[0], 0]])
 
-        # Create an undistortion map for the left and right camera which applies the
-        # rectification and undoes the camera distortion. This only has to be done
-        # once
-        m1type = cv2.CV_32FC1
-        (lm1, lm2) = cv2.fisheye.initUndistortRectifyMap(K_left, D_left, R_left, P_left, stereo_size, m1type)
-        (rm1, rm2) = cv2.fisheye.initUndistortRectifyMap(K_right, D_right, R_right, P_right, stereo_size, m1type)
-        self.undistort_rectify = {"left"  : (lm1, lm2),
-                            "right" : (rm1, rm2)}
+            # Create an undistortion map for the left and right camera which applies the
+            # rectification and undoes the camera distortion. This only has to be done
+            # once
+            m1type = cv2.CV_32FC1
+            (lm1, lm2) = cv2.fisheye.initUndistortRectifyMap(K_left, D_left, R_left, P_left, stereo_size, m1type)
+            (rm1, rm2) = cv2.fisheye.initUndistortRectifyMap(K_right, D_right, R_right, P_right, stereo_size, m1type)
+            self.undistort_rectify = {"left"  : (lm1, lm2),
+                                "right" : (rm1, rm2)}
         zero_vec = (0.0, 0.0, 0.0)
         self.pos = zero_vec
         self.vel = zero_vec
