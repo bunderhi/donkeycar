@@ -89,7 +89,7 @@ def drive(cfg,verbose=True):
             if rpy is None:
                 return 0.0,0.0,0.0
             else:
-            return rpy.roll, rpy.pitch, rpy.yaw
+                return rpy.roll, rpy.pitch, rpy.yaw
     V.add(RPYStream(), inputs=['rs/rpy'], outputs=['rpy/roll', 'rpy/pitch', 'rpy/yaw'])
 
 
