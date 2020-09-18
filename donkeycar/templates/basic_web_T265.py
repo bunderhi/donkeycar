@@ -76,28 +76,22 @@ def drive(cfg,verbose=True):
     class PosStream:
         def run(self, pos):
             #y is up, x is right, z is backwards/forwards
-            if pos.x is None:
-                return 0.0,0.0,0.0
-            elif pos.y is None:
-                return 0.0,0.0,0.0
-            elif pos.z is None:
-                return 0.0,0.0,0.0    
-            else:
+            zero_vec = (0.0, 0.0, 0.0)
+            try:
                 return pos.x, pos.z, pos.y
+            except:
+                return zero_vec
     V.add(PosStream(), inputs=['rs/pos'], outputs=['pos/x', 'pos/z', 'pos/y'])
     
     # Pull out the realsense T265 rotation stream.
     class RPYStream:
         def run(self, rpy):
             #rpy - roll, pitch yaw
-            if rpy.x is None:
-                return 0.0,0.0,0.0
-            elif rpy.y is None:
-                return 0.0,0.0,0.0
-            elif rpy.z is None:
-                return 0.0,0.0,0.0    
-            else:
+            zero_vec = (0.0, 0.0, 0.0)
+            try:
                 return rpy.roll, rpy.pitch, rpy.yaw
+            except:
+                return zero_vec
     V.add(RPYStream(), inputs=['rs/rpy'], outputs=['rpy/roll', 'rpy/pitch', 'rpy/yaw'])
 
 
