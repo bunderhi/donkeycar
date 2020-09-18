@@ -57,7 +57,7 @@ def drive(cfg,verbose=True):
 
     # Wide Angle Camera 
     cam = CSICamera(image_w=cfg.IMAGE_W, image_h=cfg.IMAGE_H, image_d=cfg.IMAGE_DEPTH, framerate=cfg.CAMERA_FRAMERATE, gstreamer_flip=cfg.CSIC_CAM_GSTREAMER_FLIP_PARM)
-    V.add(cam, inputs=[], outputs=['cam/image'], threaded=True)
+    V.add(cam, inputs=[], outputs=['cam/image2'], threaded=True)
 
     V.add(NoOdom(), outputs=['enc/vel_m_s'])
 
@@ -69,16 +69,19 @@ def drive(cfg,verbose=True):
     #V.add(Recording(), outputs=['recording'])  
 
     # This requires use of the Intel Realsense T265
-    rs = RS_T265(image_output=False, calib_filename=cfg.WHEEL_ODOM_CALIB)
-    V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'noimage'], threaded=True)
+    rs = RS_T265(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)
+    V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'cam/image1'], threaded=True)
 
     # Pull out the realsense T265 position stream, output 2d coordinates we can use to map.
     class PosStream:
         def run(self, pos):
             #y is up, x is right, z is backwards/forwards
-            zero_vec = (0.0,0.0,0.0)
-            if pos == zero_vec:
+            if pos.x is None:
                 return 0.0,0.0,0.0
+            elif pos.y is None:
+                return 0.0,0.0,0.0
+            elif pos.z is None:
+                return 0.0,0.0,0.0    
             else:
                 return pos.x, pos.z, pos.y
     V.add(PosStream(), inputs=['rs/pos'], outputs=['pos/x', 'pos/z', 'pos/y'])
@@ -87,9 +90,12 @@ def drive(cfg,verbose=True):
     class RPYStream:
         def run(self, rpy):
             #rpy - roll, pitch yaw
-            zero_vec = (0.0,0.0,0.0)
-            if rpy == zero_vec:
+            if rpy.x is None:
                 return 0.0,0.0,0.0
+            elif rpy.y is None:
+                return 0.0,0.0,0.0
+            elif rpy.z is None:
+                return 0.0,0.0,0.0    
             else:
                 return rpy.roll, rpy.pitch, rpy.yaw
     V.add(RPYStream(), inputs=['rs/rpy'], outputs=['rpy/roll', 'rpy/pitch', 'rpy/yaw'])
@@ -112,7 +118,7 @@ def drive(cfg,verbose=True):
     
     #add tub to save data
 
-    inputs=['cam/image', 'user/angle', 'user/throttle', 'pos/x', 'pos/y', 'pos/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
+    inputs=['cam/image1', 'user/angle', 'user/throttle', 'pos/x', 'pos/y', 'pos/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
 
     types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
