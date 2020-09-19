@@ -43,7 +43,7 @@ def drive(cfg,verbose=True):
     V = dk.vehicle.Vehicle()
  
     V.add(LocalWebController(), 
-          inputs=['cam/image'],
+          inputs=['cam/image1'],
           outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
           threaded=True)
 
@@ -56,8 +56,8 @@ def drive(cfg,verbose=True):
             return 0.0
 
     # Wide Angle Camera 
-    cam = CSICamera(image_w=cfg.IMAGE_W, image_h=cfg.IMAGE_H, image_d=cfg.IMAGE_DEPTH, framerate=cfg.CAMERA_FRAMERATE, gstreamer_flip=cfg.CSIC_CAM_GSTREAMER_FLIP_PARM)
-    V.add(cam, inputs=[], outputs=['cam/image2'], threaded=True)
+    #cam = CSICamera(image_w=cfg.IMAGE_W, image_h=cfg.IMAGE_H, image_d=cfg.IMAGE_DEPTH, framerate=cfg.CAMERA_FRAMERATE, gstreamer_flip=cfg.CSIC_CAM_GSTREAMER_FLIP_PARM)
+    #V.add(cam, inputs=[], outputs=['cam/image2'], threaded=True)
 
     V.add(NoOdom(), outputs=['enc/vel_m_s'])
 
