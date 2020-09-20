@@ -4,7 +4,7 @@ Nextion Display Controller
 import time
 import nextion_lib as nxlib
 
-class NextionController:
+class NextionController(object):
     def __init__(self):
         print("Starting Nextion Controller")
         ######### make connection to serial UART to read/write NEXTION
