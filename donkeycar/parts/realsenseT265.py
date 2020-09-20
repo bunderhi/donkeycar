@@ -99,7 +99,7 @@ class RS_T265(object):
         # Start streaming with requested config
         self.pipe.start(cfg)
         self.running = True
-            print("Warning: T265 needs a warmup period of a few seconds before it will emit tracking data.")
+        print("Warning: T265 needs a warmup period of a few seconds before it will emit tracking data.")
         if self.image_output:
             # Configure the OpenCV stereo algorithm. See
             # https://docs.opencv.org/3.4/d2/d85/classcv_1_1StereoSGBM.html for a

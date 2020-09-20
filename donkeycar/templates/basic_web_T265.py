@@ -24,6 +24,8 @@ from donkeycar.parts.camera import CSICamera
 from donkeycar.parts.controller import LocalWebController
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from donkeycar.parts.realsenseT265 import RS_T265
+from nextion_controller import NextionController
+
 from donkeycar.utils import *
 
 
@@ -61,12 +63,10 @@ def drive(cfg,verbose=True):
 
     V.add(NoOdom(), outputs=['enc/vel_m_s'])
 
-    #This part hardwires recording to True   **Temporary***.
-    class Recording():
-        def run(self):
-            return True
-
-    #V.add(Recording(), outputs=['recording'])  
+    #This part implements a system console display
+    # For now it only controls record on/off 
+    console = NextionController()
+    V.add(console(), outputs=['recording'])  
 
     # This requires use of the Intel Realsense T265
     rs = RS_T265(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)

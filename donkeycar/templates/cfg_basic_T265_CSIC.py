@@ -54,7 +54,11 @@ CAMERA_VFLIP = False
 CAMERA_HFLIP = False
 # For CSIC camera - If the camera is mounted in a rotated position, changing the below parameter will correct the output frame orientation
 CSIC_CAM_GSTREAMER_FLIP_PARM = 0 # (0 => none , 4 => Flip horizontally, 6 => Flip vertically)
-
+# Region of interst cropping
+# only supported in Categorical and Linear models.
+# If these crops values are too large, they will cause the stride values to become negative and the model with not be valid.
+ROI_CROP_TOP = 0                    #the number of rows of pixels to ignore on the top of the image
+ROI_CROP_BOTTOM = 0                 #the number of rows of pixels to ignore on the bottom of the image
 #Odometry
 HAVE_ODOM = False                   # Do you have an odometer? Uses pigpio 
 
