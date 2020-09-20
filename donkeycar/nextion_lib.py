@@ -3,7 +3,7 @@
 #Ricardos.geral@gmail.com
 
 import serial
-BAUD = 38400   # for new monitor please put 9600 and then run nx_setsys(ser, 'bauds', newBAUD)
+BAUD = 9600   # for new monitor please put 9600 and then run nx_setsys(ser, 'bauds', newBAUD)
 ser = serial.Serial(
   port='/dev/ttyUSB0',
   baudrate = BAUD,
