@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Nextion Display Controller
 """
@@ -14,8 +13,9 @@ class NextionController:
         # Ensure that the display is on page 2 
         nxlib.nx_setcmd_1par(self.ser, 'page', 2)
         nxlib.nx_setText(self.ser, 2,4,'Ok')
+        self.running = True
 
-    def update(self):
+    def poll(self):
             EndCom = "\xff\xff\xff"
             look_touch = 0.5  # in seconds
             print("detecting serial every {} second(s) ...".format(look_touch))
@@ -38,8 +38,13 @@ class NextionController:
                     sleep(look_touch)  ### timeout the bigger the larger the chance of missing a push
                 except:
                     pass
-
+    
+    def update(self):
+        while self.running:
+            self.poll()
+    
     def run(self):
+        self.poll()
         return self.run_threaded()
 
     def run_threaded(self):
