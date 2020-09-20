@@ -66,7 +66,7 @@ def drive(cfg,verbose=True):
     #This part implements a system console display
     # For now it only controls record on/off 
     console = NextionController()
-    V.add(console(), outputs=['recording'],threaded=True)  
+    V.add(console, outputs=['recording'],threaded=True)  
 
     # This requires use of the Intel Realsense T265
     rs = RS_T265(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)

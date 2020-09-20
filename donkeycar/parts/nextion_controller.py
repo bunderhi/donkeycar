@@ -5,6 +5,10 @@ import time
 import nextion_lib as nxlib
 
 class NextionController(object):
+    '''
+    A part to communicate with a Nextion Display over a uart. The 
+    display is being used as a vehicle console
+    '''
     def __init__(self):
         print("Starting Nextion Controller")
         ######### make connection to serial UART to read/write NEXTION
