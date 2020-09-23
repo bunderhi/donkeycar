@@ -23,7 +23,7 @@ from donkeycar.parts.datastore import TubHandler
 from donkeycar.parts.camera import CSICamera
 from donkeycar.parts.controller import LocalWebController
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
-from donkeycar.parts.realsenseT265 import RS_T265
+from donkeycar.parts.realsenseT265 import RS_T265RAW
 from donkeycar.parts.nextion_controller import NextionController
 
 from donkeycar.utils import *
