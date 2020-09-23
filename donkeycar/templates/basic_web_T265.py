@@ -69,7 +69,7 @@ def drive(cfg,verbose=True):
     V.add(console, outputs=['recording'],threaded=True)  
 
     # This requires use of the Intel Realsense T265
-    rs = RS_T265(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)
+    rs = RS_T265RAW(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)
     V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'cam/image1'], threaded=True)
 
     # Pull out the realsense T265 position stream, output 2d coordinates we can use to map.
@@ -82,6 +82,17 @@ def drive(cfg,verbose=True):
             except:
                 return zero_vec
     V.add(PosStream(), inputs=['rs/pos'], outputs=['pos/x', 'pos/z', 'pos/y'])
+    
+    # Pull out the realsense T265 position stream, output 2d coordinates we can use to map.
+    class VelStream:
+        def run(self, vel):
+            #y is up, x is right, z is backwards/forwards
+            zero_vec = (0.0, 0.0, 0.0)
+            try:
+                return vel.x, vel.z, vel.y
+            except:
+                return zero_vec
+    V.add(PosStream(), inputs=['rs/vel'], outputs=['vel/x', 'vel/z', 'vel/y'])
     
     # Pull out the realsense T265 rotation stream.
     class RPYStream:
@@ -112,9 +123,9 @@ def drive(cfg,verbose=True):
     
     #add tub to save data
 
-    inputs=['cam/image1', 'user/angle', 'user/throttle', 'pos/x', 'pos/y', 'pos/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
+    inputs=['cam/image1', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
 
-    types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+    types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
 
     th = TubHandler(path=cfg.DATA_PATH)
