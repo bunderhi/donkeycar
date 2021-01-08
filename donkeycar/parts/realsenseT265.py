@@ -377,6 +377,28 @@ class RS_T265RAW(object):
         time.sleep(0.1)
         self.pipe.stop()
 
+class ImgPreProcess(object):
+    '''
+    preprocess camera image for inference.
+    '''
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.gray = None
+        self.crop_img = None
+        self.im2 = None
+        self.image = None
+        self.inf_inputs = None
+        self.clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+
+    def run(self, img_arr):
+        self.gray = cv2.cvtColor(img_arr,cv2.COLOR_RGB2GRAY)
+        self.crop_img = self.gray[230:550, 130:770]
+        self.crop_img = self.clahe.apply(self.crop_img)
+        self.im2 = cv2.resize(self.crop_img,None,fx=0.5,fy=0.5,interpolation=cv2.INTER_AREA)
+        self.image = cv2.cvtColor(self.im2,cv2.COLOR_GRAY2RGB)
+        self.inf_inputs = self.image.transpose(2,0,1).reshape(1,3,160,320)
+        return self.image,np.array(self.inf_inputs, dtype=np.float32, order='C')/255
+
 if __name__ == "__main__":
     c = RS_T265()
     while True:

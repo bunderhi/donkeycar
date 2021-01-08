@@ -19,11 +19,10 @@ from docopt import docopt
 import numpy as np
 
 import donkeycar as dk
-from donkeycar.parts.datastore import TubHandler
 from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.controller import WebFpv
 from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
-from donkeycar.parts.realsenseT265 import RS_T265RAW
+from donkeycar.parts.realsenseT265 import ImgPreProcess
 from donkeycar.parts.nextion_controller import NextionController
 
 from donkeycar.utils import *
@@ -46,34 +45,21 @@ def drive(cfg,verbose=True):
  
 
     # FPS Camera image viewer
-    V.add(WebFpv(), inputs=['cam/image_array'], threaded=True)
+    V.add(WebFpv(), inputs=['cam/fpv'], threaded=True)
 
     #This part implements a system console display
     # For now it only controls record on/off 
     console = NextionController()
-    V.add(console, outputs=['recording'],threaded=True)  
+    V.add(console, outputs=['recording','user/mode'],threaded=True)  
 
     # Mock camera feed
     cam = ImageListCamera(path_mask=cfg.PATH_MASK)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
-
-    class ImgPreProcess():
-        '''
-        preprocess camera image for inference.
-        normalize and crop if needed.
-        '''
-        def __init__(self, cfg):
-            self.cfg = cfg
-
-        def run(self, img_arr):
-            return normalize_and_crop(img_arr, self.cfg)
-
-    inf_input = 'cam/normalized/cropped'
     
     V.add(ImgPreProcess(cfg),
         inputs=['cam/image_array'],
-        outputs=[inf_input],
-        run_condition='run_pilot')
+        outputs=['cam/fpv','cam/inf_input'],
+        run_condition='user/mode')
 
     #Choose what inputs should change the car.
     class DriveMode:
