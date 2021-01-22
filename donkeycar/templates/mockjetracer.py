@@ -61,6 +61,7 @@ def drive(cfg,verbose=True):
         outputs=['cam/fpv','cam/inf_input'],
         run_condition='user/mode')
 
+
     #Choose what inputs should change the car.
     class DriveMode:
         def run(self, mode,
