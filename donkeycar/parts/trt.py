@@ -3,11 +3,13 @@ import sys,os
 import pycuda.driver as cuda
 import pycuda.autoinit
 import numpy as np
-import tensorrt as tensorrt
+import tensorrt 
 from pathlib import Path
 
 
 EXPLICIT_BATCH = 1 << (int)(tensorrt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+
+TRT_LOGGER = tensorrt.Logger()
 
 def GiB(val):
     return val * 1 << 30
@@ -30,7 +32,7 @@ class TensorRTSegment(object):
     '''
     
     def __init__(self, cfg, *args, **kwargs):
-        self.logger = tensorrt.Logger()
+        self.logger = TRT_LOGGER
         self.cfg = cfg
         self.engine = None
         self.inputs = None
@@ -103,7 +105,7 @@ class TensorRTSegment(object):
         """Attempts to load a serialized engine if available, otherwise builds a new TensorRT engine and saves it."""
         def build_engine(self):
             """Takes an ONNX file and creates a TensorRT engine to run inference with"""
-            with tensorrt.Builder(Logger=tensorrt.ILogger) as builder, builder.create_network(EXPLICIT_BATCH) as network, tensorrt.OnnxParser(network, self.logger()) as parser:
+            with tensorrt.Builder(TRT_LOGGER) as builder, builder.create_network(EXPLICIT_BATCH) as network, tensorrt.OnnxParser(network, TRT_LOGGER) as parser:
                 builder.max_workspace_size = 1 << 28 # 256MiB
                 builder.max_batch_size = 1
                 builder.fp16_mode = True
@@ -132,7 +134,7 @@ class TensorRTSegment(object):
         if os.path.exists(engine_file_path):
             # If a serialized engine exists, use it instead of building an engine.
             print("Reading engine from file {}".format(engine_file_path))
-            with open(engine_file_path, "rb") as f, tensorrt.Runtime(Logger=tensorrt.ILogger) as runtime:
+            with open(engine_file_path, "rb") as f, tensorrt.Runtime(TRT_LOGGER) as runtime:
                 return runtime.deserialize_cuda_engine(f.read())
         else:
             return build_engine(self)
