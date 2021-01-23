@@ -102,7 +102,7 @@ class TensorRTSegment(object):
         """Attempts to load a serialized engine if available, otherwise builds a new TensorRT engine and saves it."""
         def build_engine(self):
             """Takes an ONNX file and creates a TensorRT engine to run inference with"""
-            with trt.Builder(self.logger) as builder, builder.create_network(EXPLICIT_BATCH) as network, trt.OnnxParser(network, self.logger) as parser:
+            with trt.Builder(self.logger()) as builder, builder.create_network(EXPLICIT_BATCH) as network, trt.OnnxParser(network, self.logger()) as parser:
                 builder.max_workspace_size = 1 << 28 # 256MiB
                 builder.max_batch_size = 1
                 builder.fp16_mode = True
@@ -131,7 +131,7 @@ class TensorRTSegment(object):
         if os.path.exists(engine_file_path):
             # If a serialized engine exists, use it instead of building an engine.
             print("Reading engine from file {}".format(engine_file_path))
-            with open(engine_file_path, "rb") as f, trt.Runtime(self.logger) as runtime:
+            with open(engine_file_path, "rb") as f, trt.Runtime(self.logger()) as runtime:
                 return runtime.deserialize_cuda_engine(f.read())
         else:
             return build_engine(self)
