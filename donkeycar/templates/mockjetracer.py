@@ -67,7 +67,7 @@ def drive(cfg,verbose=True):
 
     start = time.time()
     print('loading model')
-    trt.load(onnx_file_path=cfg.onnx_file_path,engine_file_path=cfg.engine_file_path)
+    trt.load(onnx_file_path=cfg.MODEL_PATH,engine_file_path=cfg.ENGINE_PATH)
     print('finished loading in %s sec.' % (str(time.time() - start)))
 
     V.add(trt, inputs=['cam/inf_input'],
