@@ -45,7 +45,7 @@ def drive(cfg,verbose=True):
 
     class HardcodeUserMode:
         def run(self):
-            assert(cfg.USERMODE is not None and cfg.AIPILOT is not None and cfg.RECORD is not None,'Missing config settings (USERMODE,AIPILOT,RECORD')
+            assert cfg.USERMODE is not None and cfg.AIPILOT is not None and cfg.RECORD is not None,'Missing config settings (USERMODE,AIPILOT,RECORD'
             return cfg.USERMODE,cfg.RECORD,cfg.AIPILOT
     V.add(HardcodeUserMode(), outputs=['user/mode','recording','AI/pilot'])
     
