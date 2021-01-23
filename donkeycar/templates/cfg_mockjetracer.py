@@ -15,6 +15,11 @@ print(cfg.CAMERA_RESOLUTION)
 
 import os
 
+#Operating modes
+USERMODE = 'user' # Operating mode user = manual operation
+AIPILOT = False # Start the AI Pilot 
+RECORD = True  # log to disk
+
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(CAR_PATH, 'data')
@@ -63,7 +68,8 @@ CSIC_CAM_GSTREAMER_FLIP_PARM = 0 # (0 => none , 4 => Flip horizontally, 6 => Fli
 ROI_CROP_TOP = 0                    #the number of rows of pixels to ignore on the top of the image
 ROI_CROP_BOTTOM = 0                 #the number of rows of pixels to ignore on the bottom of the image
 
-
+ALPHA = 0.5  # Alpha blend value used for fpv image (camera image + mask)
+TIMER = False  # Display FPS timing on fpv view
 
 #Odometry
 HAVE_ODOM = False                   # Do you have an odometer? Uses pigpio 

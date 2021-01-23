@@ -19,6 +19,7 @@ from docopt import docopt
 import numpy as np
 
 import donkeycar as dk
+from donkeycar.parts.datastore import TubHandler
 from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.controller import WebFpv
 from donkeycar.parts.realsenseT265 import ImgPreProcess, ImgAlphaBlend
@@ -42,6 +43,13 @@ def drive(cfg,verbose=True):
     #Initialize car
     V = dk.vehicle.Vehicle()
 
+    class HardcodeUserMode:
+        def run(self):
+            assert(cfg.USERMODE is not None and cfg.AIPILOT is not None and cfg.RECORD is not None,'Missing config settings (USERMODE,AIPILOT,RECORD')
+            return cfg.USERMODE,cfg.RECORD,cfg.AIPILOT
+    V.add(HardcodeUserMode(), outputs=['user/mode','recording','AI/pilot'])
+    
+
     # FPS Camera image viewer
     V.add(WebFpv(), inputs=['cam/fpv'], threaded=True)
 
@@ -63,13 +71,23 @@ def drive(cfg,verbose=True):
     print('finished loading in %s sec.' % (str(time.time() - start)))
 
     V.add(trt, inputs=['cam/inf_input'],
-        outputs=['cam/mask','inf/framecount']
+        outputs=['cam/mask','inf/framecount'], run_condition='AI/pilot'
         )
 
     V.add(ImgAlphaBlend(cfg),
         inputs=['cam/mask','cam/raw','cam/framecount','inf/framecount'],
-        outputs=['cam/fpv']
+        outputs=['cam/fpv'], run_condition='AI/pilot'
         )
+
+    #add tub to save data
+
+    inputs=['cam/raw']
+    types=['image_array']
+
+
+    th = TubHandler(path=cfg.DATA_PATH)
+    tub = th.new_tub_writer(inputs=inputs, types=types)
+    V.add(tub, inputs=inputs, outputs=["tub/num_records"], run_condition='recording')
 
     #run the vehicle
     V.start(rate_hz=cfg.DRIVE_LOOP_HZ, 
