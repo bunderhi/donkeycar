@@ -419,11 +419,13 @@ class ImgAlphaBlend(object):
         self.fps = 0
         self.ips = 0
         self.timer = cfg.TIMER
+        self.yelImg = np.zeros((160,320),np.uint8)
+        self.yelImg[:,:] = (255,255,0)
 
     def run(self, src1, src2, camcount, infcount):
-        # assert src1.shape() == src2.shape(),'ImgAlphaBlend Failed, image shapes are mismatched'
         src1color = cv2.cvtColor(src1,cv2.COLOR_GRAY2RGB)
-        dst = cv2.addWeighted(src1color, self.alpha, src2, self.beta, 0.0)
+        yelMask = cv2.bitwise_and(self.yelImg, self.yelImg, mask=src1color)
+        dst = cv2.addWeighted(yelMask, self.alpha, src2, self.beta, 0.0)
         if (self.timer and camcount % 100 == 0 and camcount != 0):
             e = time.time()
             inferences = self.infcount - infcount
