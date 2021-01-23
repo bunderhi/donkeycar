@@ -1,6 +1,5 @@
 import sys,os
 
-from donkeycar.parts.keras import KerasPilot
 import pycuda.driver as cuda
 import pycuda.autoinit
 import numpy as np
@@ -25,12 +24,11 @@ class HostDeviceMem(object):
     def __repr__(self):
         return self.__str__()
 
-class TensorRTLinear(KerasPilot):
+class TensorRTSegment(object):
     '''
-    Uses TensorRT to do the inference.
+    Use TensorRT to perform a image freespace segmentation inference.
     '''
     def __init__(self, cfg, *args, **kwargs):
-        super(TensorRTLinear, self).__init__(*args, **kwargs)
         self.logger = trt.Logger(trt.Logger.WARNING)
         self.cfg = cfg
         self.engine = None
@@ -38,15 +36,16 @@ class TensorRTLinear(KerasPilot):
         self.outputs = None
         self.bindings = None
         self.stream = None
+        self.infcount = 0
     
     def compile(self):
         print('Nothing to compile')
     
     def load(self, onnx_file_path, engine_file_path):
         print('Building CUDA Engine')
-        self.engine = TensorRTLinear.get_engine(self,onnx_file_path, engine_file_path) 
+        self.engine = TensorRTSegment.get_engine(onnx_file_path=onnx_file_path,engine_file_path=engine_file_path) 
         print('Allocating Buffers')
-        self.inputs, self.outputs, self.bindings, self.stream = TensorRTLinear.allocate_buffers(self.engine)
+        self.inputs, self.outputs, self.bindings, self.stream = TensorRTSegment.allocate_buffers(self.engine)
         print('Ready')
 
     def run(self, inf_inputs):
@@ -56,9 +55,10 @@ class TensorRTLinear(KerasPilot):
         # Set host input to the image. The do_inference_v2 function will copy the input to the GPU before executing.
         self.inputs[0].host = inf_inputs
         with self.engine.create_execution_context() as context:
-            trt_outputs = TensorRTLinear.do_inference_v2(context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream)
+            trt_outputs = TensorRTSegment.do_inference_v2(context=context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream)
         mask = (trt_outputs[0] > 0.4).astype(np.uint8).reshape(160,320)
-        return mask
+        self.infcount += 1
+        return mask,self.infcount
 
     # Allocates all buffers required for an engine, i.e. host/device inputs/outputs.
     @classmethod
@@ -131,7 +131,7 @@ class TensorRTLinear(KerasPilot):
         if os.path.exists(engine_file_path):
             # If a serialized engine exists, use it instead of building an engine.
             print("Reading engine from file {}".format(engine_file_path))
-            with open(engine_file_path, "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
+            with open(engine_file_path, "rb") as f, trt.Runtime(self.logger) as runtime:
                 return runtime.deserialize_cuda_engine(f.read())
         else:
-            return build_engine()
+            return build_engine(self)

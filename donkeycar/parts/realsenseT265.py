@@ -12,6 +12,7 @@ import cv2
 import os
 from math import tan, pi, asin, atan2
 import pyrealsense2 as rs
+import time
 
 class RPY:
     def __init__(self, rotation):
@@ -370,7 +371,7 @@ class RS_T265RAW(object):
     def run(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms
         self.poll()
-        return self.run_threaded()
+        return self.run_threaded(enc_vel_ms)
 
     def shutdown(self):
         self.running = False
@@ -389,6 +390,7 @@ class ImgPreProcess(object):
         self.image = None
         self.inf_inputs = None
         self.clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        self.framecount = 0
 
     def run(self, img_arr):
         self.gray = cv2.cvtColor(img_arr,cv2.COLOR_RGB2GRAY)
@@ -397,12 +399,41 @@ class ImgPreProcess(object):
         self.im2 = cv2.resize(self.crop_img,None,fx=0.5,fy=0.5,interpolation=cv2.INTER_AREA)
         self.image = cv2.cvtColor(self.im2,cv2.COLOR_GRAY2RGB)
         self.inf_inputs = self.image.transpose(2,0,1).reshape(1,3,160,320)
-        return self.image,np.array(self.inf_inputs, dtype=np.float32, order='C')/255
+        self.framecount += 1
+        return self.image,np.array(self.inf_inputs, dtype=np.float32, order='C')/255,self.framecount
 
-if __name__ == "__main__":
-    c = RS_T265()
-    while True:
-        pos, vel, acc = c.run()
-        print(pos)
-        time.sleep(0.1)
-    c.shutdown()
+class ImgAlphaBlend(object):
+    '''
+    Combine camera image and inference mask for fpv viewer.
+    '''
+    def __init__(self, cfg):
+        self.cfg = cfg 
+        if cfg.ALPHA:
+            self.alpha = cfg.ALPHA
+        else:
+            self.alpha = 0.5
+        self.beta = (1.0 - self.alpha)
+        self.t = time.time()
+        self.camcount = 0
+        self.infcount = 0
+        self.fps = 0
+        self.ips = 0
+        self.timer = cfg.TIMER
+
+    def run(self, src1, src2, camcount, infcount):
+        assert(src1.shape() == src2.shape(),'ImgAlphaBlend Failed, image shapes are mismatched')
+        dst = cv2.addWeighted(src1, self.alpha, src2, self.beta, 0.0)
+        if (self.timer and camcount % 100 == 0 and camcount != 0):
+            e = time.time()
+            inferences = self.infcount - infcount
+            self.fps = round(100.0 / (e - self.t))
+            self.ips = round(inferences / (e - self.t))
+            print(f'fps: {fps} ips: {ips}')
+            self.infcount = infcount
+            self.t = time.time()
+        if (self.timer):
+            text = f'{self.fps} / {self.ips}'          
+            label_width, label_height, baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+            y = label_height + baseline + 2
+            dst = cv2.putText(dst,text,(2,y),cv2.FONT_HERSHEY_SIMPLEX,1,(255, 0, 0), 2, cv2.LINE_AA) 
+        return dst

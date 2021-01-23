@@ -21,9 +21,8 @@ import numpy as np
 import donkeycar as dk
 from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.controller import WebFpv
-from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
-from donkeycar.parts.realsenseT265 import ImgPreProcess
-from donkeycar.parts.nextion_controller import NextionController
+from donkeycar.parts.realsenseT265 import ImgPreProcess, ImgAlphaBlend
+from donkeycar.parts.trt import TensorRTSegment
 
 from donkeycar.utils import *
 
@@ -42,15 +41,9 @@ def drive(cfg,verbose=True):
     
     #Initialize car
     V = dk.vehicle.Vehicle()
- 
 
     # FPS Camera image viewer
     V.add(WebFpv(), inputs=['cam/fpv'], threaded=True)
-
-    #This part implements a system console display
-    # For now it only controls record on/off 
-    console = NextionController()
-    V.add(console, outputs=['recording','user/mode'],threaded=True)  
 
     # Mock camera feed
     cam = ImageListCamera(path_mask=cfg.PATH_MASK)
@@ -58,44 +51,26 @@ def drive(cfg,verbose=True):
     
     V.add(ImgPreProcess(cfg),
         inputs=['cam/image_array'],
-        outputs=['cam/fpv','cam/inf_input'],
-        run_condition='user/mode')
+        outputs=['cam/raw','cam/inf_input','cam/framecount']
+        )
 
+    # Create and load Freespace segmentation model
+    trt = TensorRTSegment(cfg=cfg)
 
-    #Choose what inputs should change the car.
-    class DriveMode:
-        def run(self, mode,
-                    user_angle, user_throttle,
-                    pilot_angle, pilot_throttle):
-            if mode == 'user':
-                return user_angle, user_throttle
+    start = time.time()
+    print('loading model')
+    trt.load(onnx_file_path=cfg.onnx_file_path,engine_file_path=cfg.engine_file_path)
+    print('finished loading in %s sec.' % (str(time.time() - start)))
 
-            elif mode == 'local_angle':
-                return pilot_angle if pilot_angle else 0.0, user_throttle
+    V.add(trt, inputs=['cam/inf_input'],
+        outputs=['cam/mask','inf/framecount']
+        )
 
-            else:
-                return pilot_angle if pilot_angle else 0.0, pilot_throttle * cfg.AI_THROTTLE_MULT if pilot_throttle else 0.0
+    V.add(ImgAlphaBlend(cfg),
+        inputs=['cam/mask','cam/raw','cam/framecount','inf/framecount'],
+        outputs=['cam/fpv']
+        )
 
-    V.add(DriveMode(),
-          inputs=['user/mode', 'user/angle', 'user/throttle',
-                  'pilot/angle', 'pilot/throttle'],
-          outputs=['angle', 'throttle'])
-
-    #Drive train setup
-    steering_controller = PCA9685(cfg.STEERING_CHANNEL, cfg.PCA9685_I2C_ADDR, busnum=cfg.PCA9685_I2C_BUSNUM)
-    steering = PWMSteering(controller=steering_controller,
-                                    left_pulse=cfg.STEERING_LEFT_PWM, 
-                                    right_pulse=cfg.STEERING_RIGHT_PWM)
-    
-    throttle_controller = PCA9685(cfg.THROTTLE_CHANNEL, cfg.PCA9685_I2C_ADDR, busnum=cfg.PCA9685_I2C_BUSNUM)
-    throttle = PWMThrottle(controller=throttle_controller,
-                                    max_pulse=cfg.THROTTLE_FORWARD_PWM,
-                                    zero_pulse=cfg.THROTTLE_STOPPED_PWM, 
-                                    min_pulse=cfg.THROTTLE_REVERSE_PWM)
-
-    V.add(steering, inputs=['angle'])
-    V.add(throttle, inputs=['throttle'])
-    
     #run the vehicle
     V.start(rate_hz=cfg.DRIVE_LOOP_HZ, 
             max_loop_count=cfg.MAX_LOOPS)
