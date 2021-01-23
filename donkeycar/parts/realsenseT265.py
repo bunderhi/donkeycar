@@ -421,7 +421,7 @@ class ImgAlphaBlend(object):
         self.timer = cfg.TIMER
 
     def run(self, src1, src2, camcount, infcount):
-        assert src1.shape() == src2.shape(),'ImgAlphaBlend Failed, image shapes are mismatched'
+        # assert src1.shape() == src2.shape(),'ImgAlphaBlend Failed, image shapes are mismatched'
         dst = cv2.addWeighted(src1, self.alpha, src2, self.beta, 0.0)
         if (self.timer and camcount % 100 == 0 and camcount != 0):
             e = time.time()

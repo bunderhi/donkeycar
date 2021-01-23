@@ -17,8 +17,8 @@ import os
 
 #Operating modes
 USERMODE = 'user' # Operating mode user = manual operation
-AIPILOT = False # Start the AI Pilot 
-RECORD = True  # log to disk
+AIPILOT = True # Start the AI Pilot 
+RECORD = False  # log to disk
 
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))

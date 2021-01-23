@@ -53,7 +53,7 @@ class TensorRTSegment(object):
 
     def run(self, inf_inputs):
         # Do inference
-        print('Running inference on image')
+        #print('Running inference on image')
         trt_outputs = []
         # Set host input to the image. The do_inference_v2 function will copy the input to the GPU before executing.
         self.inputs[0].host = inf_inputs

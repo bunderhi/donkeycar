@@ -51,7 +51,7 @@ def drive(cfg,verbose=True):
     
 
     # FPS Camera image viewer
-    V.add(WebFpv(), inputs=['cam/raw'], threaded=True)
+    V.add(WebFpv(), inputs=['cam/fpv'], threaded=True)
 
     # Mock camera feed
     cam = ImageListCamera(path_mask=cfg.PATH_MASK)
