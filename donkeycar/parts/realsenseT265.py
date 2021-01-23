@@ -436,4 +436,4 @@ class ImgAlphaBlend(object):
             label_width, label_height, baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
             y = label_height + baseline + 2
             dst = cv2.putText(dst,text,(2,y),cv2.FONT_HERSHEY_SIMPLEX,1,(255, 0, 0), 2, cv2.LINE_AA) 
-        return dst
+        return src1color
