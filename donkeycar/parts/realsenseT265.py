@@ -423,7 +423,7 @@ class ImgAlphaBlend(object):
 
     def run(self, mask, img, camcount, infcount):
         red = (mask*255).reshape(1,160,320)
-        redmask = np.vstack((self.fill,red)).transpose(2,0,1)
+        redmask = np.vstack((self.fill,red)).transpose(1,2,0)
         dst = cv2.addWeighted(redmask, self.alpha, img, self.beta, 0.0)
         if (self.timer and camcount % 100 == 0 and camcount != 0):
             e = time.time()
