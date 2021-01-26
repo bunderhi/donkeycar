@@ -71,11 +71,11 @@ def drive(cfg,verbose=True):
     print('finished loading in %s sec.' % (str(time.time() - start)))
 
     V.add(trt, inputs=['cam/inf_input'],
-        outputs=['cam/mask','inf/framecount'], run_condition='AI/pilot'
+        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot'
         )
 
     V.add(ImgAlphaBlend(cfg),
-        inputs=['cam/mask','cam/raw','cam/framecount','inf/framecount'],
+        inputs=['inf/mask','cam/raw','cam/framecount','inf/framecount'],
         outputs=['cam/fpv'], run_condition='AI/pilot'
         )
 

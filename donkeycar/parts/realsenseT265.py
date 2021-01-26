@@ -413,6 +413,7 @@ class ImgAlphaBlend(object):
         else:
             self.alpha = 0.5
         self.beta = (1.0 - self.alpha)
+        self.fill = np.zeros((2,160,320),dtype=np.uint8)
         self.t = time.time()
         self.camcount = 0
         self.infcount = 0
@@ -420,15 +421,16 @@ class ImgAlphaBlend(object):
         self.ips = 0
         self.timer = cfg.TIMER
 
-    def run(self, src1, src2, camcount, infcount):
-        src1color = np.stack([src1]*3, axis=2)
-        dst = cv2.addWeighted(src1color, self.alpha, src2, self.beta, 0.0)
+    def run(self, mask, img, camcount, infcount):
+        red = (mask*255).reshape(1,160,320)
+        redmask = np.vstack((fill,red))
+        dst = cv2.addWeighted(redmask, self.alpha, img, self.beta, 0.0)
         if (self.timer and camcount % 100 == 0 and camcount != 0):
             e = time.time()
             inferences = self.infcount - infcount
             self.fps = round(100.0 / (e - self.t))
             self.ips = round(inferences / (e - self.t))
-            print(f'fps: {fps} ips: {ips}')
+            print(f'fps: {self.fps} ips: {self.ips}')
             self.infcount = infcount
             self.t = time.time()
         if (self.timer):
@@ -436,4 +438,4 @@ class ImgAlphaBlend(object):
             label_width, label_height, baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
             y = label_height + baseline + 2
             dst = cv2.putText(dst,text,(2,y),cv2.FONT_HERSHEY_SIMPLEX,1,(255, 0, 0), 2, cv2.LINE_AA) 
-        return src1color
+        return dst
