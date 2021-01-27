@@ -58,7 +58,7 @@ def drive(cfg,verbose=True):
     types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
     
     reader=TubReader(path=cfg.READ_PATH)
-    V.add(reader,outputs='input/record')
+    V.add(reader,outputs=['input/record'])
 
     class ReadStream:
         def run(self, record_dict):
