@@ -427,14 +427,14 @@ class ImgAlphaBlend(object):
         dst = cv2.addWeighted(redmask, self.alpha, img, self.beta, 0.0)
         if (self.timer and camcount % 100 == 0 and camcount != 0):
             e = time.time()
-            inferences = self.infcount - infcount
+            inferences = infcount - self.infcount
             self.fps = round(100.0 / (e - self.t))
             self.ips = round(inferences / (e - self.t))
             print(f'fps: {self.fps} ips: {self.ips}')
             self.infcount = infcount
             self.t = time.time()
         if (self.timer):
-            text = f'{self.fps} / {self.ips}'          
+            text = f'{self.ips}'          
             (label_width, label_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
             y = label_height + baseline + 2
             dst = cv2.putText(dst,text,(2,y),cv2.FONT_HERSHEY_SIMPLEX,1,(255, 0, 0), 2, cv2.LINE_AA) 

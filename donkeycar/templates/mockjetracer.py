@@ -53,9 +53,33 @@ def drive(cfg,verbose=True):
     # FPS Camera image viewer
     V.add(WebFpv(), inputs=['cam/fpv'], threaded=True)
 
+    # Mock camera from existing tub 
+    inputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
+    types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+    
+    reader=TubReader(path=cfg.READ_PATH)
+    V.add(reader,outputs='input/record')
+
+    class ReadStream:
+        def run(self, record_dict):
+            val = record_dict['cam/image_array']
+            img = Image.open((val))
+            posx = record_dict['pos/x']
+            posy = record_dict['pos/y']
+            posz = record_dict['pos/z']
+            velx = record_dict['vel/x']
+            vely = record_dict['vel/y']
+            velz = record_dict['vel/z']
+            roll = record_dict['roll']
+            pitch = record_dict['pitch']
+            yaw = record_dict['yaw']
+            return np.array(img),posx,posy, posz,velx,vely, velz, roll,pitch 
+    
+    V.add(ReadStream,inputs=['input/record'],outputs=['cam/image_array','pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
+    
     # Mock camera feed
-    cam = ImageListCamera(path_mask=cfg.PATH_MASK)
-    V.add(cam, outputs=['cam/image_array'], threaded=True)
+    #cam = ImageListCamera(path_mask=cfg.PATH_MASK)
+    #V.add(cam, outputs=['cam/image_array'], threaded=True)
     
     V.add(ImgPreProcess(cfg),
         inputs=['cam/image_array'],
