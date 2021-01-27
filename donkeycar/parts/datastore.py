@@ -450,7 +450,7 @@ class TubWriter(Tub):
 
 class TubReader(Tub):
     def __init__(self, path, *args, **kwargs):
-        super(TubReader, self).__init__(self.path,*args, **kwargs)
+        super(TubReader, self).__init__(path,*args, **kwargs)
 
     def run(self, *args):
         """
