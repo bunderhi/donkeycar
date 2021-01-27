@@ -19,7 +19,7 @@ from docopt import docopt
 import numpy as np
 
 import donkeycar as dk
-from donkeycar.parts.datastore import TubHandler
+from donkeycar.parts.datastore import TubHandler,TubReader
 from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.controller import WebFpv
 from donkeycar.parts.realsenseT265 import ImgPreProcess, ImgAlphaBlend
@@ -62,8 +62,7 @@ def drive(cfg,verbose=True):
 
     class ReadStream:
         def run(self, record_dict):
-            val = record_dict['cam/image_array']
-            img = Image.open((val))
+            img_array = record_dict['cam/image_array']
             posx = record_dict['pos/x']
             posy = record_dict['pos/y']
             posz = record_dict['pos/z']
@@ -73,7 +72,7 @@ def drive(cfg,verbose=True):
             roll = record_dict['roll']
             pitch = record_dict['pitch']
             yaw = record_dict['yaw']
-            return np.array(img),posx,posy, posz,velx,vely, velz, roll,pitch 
+            return img_array,posx,posy,posz,velx,vely,velz,roll,pitch,yaw 
     
     V.add(ReadStream,inputs=['input/record'],outputs=['cam/image_array','pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
     
