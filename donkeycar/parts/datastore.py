@@ -451,7 +451,7 @@ class TubWriter(Tub):
 class TubReader(Tub):
     def __init__(self, path, *args, **kwargs):
         super(TubReader, self).__init__(path,*args, **kwargs)
-        self.current_ix = 0
+        self.current_ix = 1
 
     def run(self, *args):
         """
