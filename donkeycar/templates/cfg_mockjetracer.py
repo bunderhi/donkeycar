@@ -25,7 +25,8 @@ CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(CAR_PATH, 'data')
 MODEL_PATH = os.path.join(CAR_PATH, 'models/model10.onnx')
 ENGINE_PATH = os.path.join(CAR_PATH, 'engine/model10.trt')
-PATH_MASK = '/media/C63B-4FCD/data/**/*.jpg'
+#PATH_MASK = '/media/C63B-4FCD/data/**/*.jpg'
+READ_PATH = '/media/C63B-4FCD/data/tub'
 
 #VEHICLE
 DRIVE_LOOP_HZ = 20      # the vehicle loop will pause if faster than this speed.
