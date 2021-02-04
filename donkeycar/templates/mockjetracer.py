@@ -62,6 +62,7 @@ def drive(cfg,verbose=True):
 
     class ReadStream:
         def run(self, record_dict):
+            
             img_array = record_dict['cam/image_array']
             posx = record_dict['pos/x']
             posy = record_dict['pos/y']
