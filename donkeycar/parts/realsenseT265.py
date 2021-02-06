@@ -440,77 +440,6 @@ class ImgAlphaBlend(object):
             dst = cv2.putText(dst,text,(2,y),cv2.FONT_HERSHEY_SIMPLEX,1,(255, 0, 0), 2, cv2.LINE_AA) 
         return dst
 
-class BirdseyeView(object):
-    '''
-    Produce a undistorted birdseye view for the inference mask.
-    '''
-    def __init__(self, cfg):
-        self.cfg = cfg
-        leftcam = {
-        "width": 848,
-        "height": 800, 
-        "ppx": 432.782, "ppy": 406.656, 
-        "fx": 285.247, "fy": 286.178, 
-        "model": 5, 
-        "coeffs": [-0.00460218, 0.0404374, -0.0388418, 0.00706689, 0]
-        }
-        # Translate the intrinsics from librealsense into OpenCV
-        K  = camera_matrix(leftcam)
-        D  = fisheye_distortion(leftcam)
-        DIM = (leftcam["width"], leftcam["height"])
-        print("camera_matrix:", K)
-        print("distortion:",D)
-        print("camera:", DIM)
-        # create Undistort map for fisheye correction
-        self.map1, self.map2 = cv2.fisheye.initUndistortRectifyMap(K, D, np.eye(3), K, DIM, cv2.CV_32FC1) 
-        # create Perspective Transform for birdseye view
-        srcpts = np.float32([[400,410],[500,410],[130,550],[770,550]])
-        dstpts = np.float32([[200,100],[600,100],[200,240],[600,240]])
-        self.M = cv2.getPerspectiveTransform(srcpts,dstpts)
-
-    def undistort(self,img):    
-        """
-        Perform a fisheye undistort  
-        """
-        undistorted_img = cv2.remap(img, self.map1, self.map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)    
-        return undistorted_img 
-
-    def reverse(self,img):
-        """
-        Reverse the preprocessing performed on an image 
-        """
-        original = np.zeros((800,848,3),dtype=np.uint8)
-        img = cv2.resize(img,None,fx=2.0,fy=2.0,interpolation=cv2.INTER_AREA)
-        original[230:550, 130:770] = img
-        return original
-
-    def warpperspective(img):
-        """
-        Create a birdseye view from image 
-        """
-        dst = cv2.warpPerspective(img,self.M,(800,240))
-        return dst
-
-    def camera_matrix(intrinsics):
-    """
-    Returns a camera matrix K from librealsense intrinsics
-    """
-    return np.array([[intrinsics["fx"],             0, intrinsics["ppx"]],
-                     [            0, intrinsics["fy"], intrinsics["ppy"]],
-                     [            0,             0,              1]])
-
-    def fisheye_distortion(intrinsics):
-    """
-    Returns the fisheye distortion from librealsense intrinsics
-    """
-    return np.array(intrinsics["coeffs"][:4])
-
-    def run(self,img)
-        original = reverse(img)
-        undistorted_img = undistort(original)
-        birdseye_img = warpperspective(undistorted_img)
-        return birdseye_img
-    
     def draw_text(
         img,
         *,
@@ -564,5 +493,78 @@ class BirdseyeView(object):
             )
 
             uv_top_left += [0, h * line_spacing]
+
+
+class BirdseyeView(object):
+    '''
+    Produce a undistorted birdseye view for the inference mask.
+    '''
+    def __init__(self, cfg):
+        self.cfg = cfg
+        leftcam = {
+        "width": 848,
+        "height": 800, 
+        "ppx": 432.782, "ppy": 406.656, 
+        "fx": 285.247, "fy": 286.178, 
+        "model": 5, 
+        "coeffs": [-0.00460218, 0.0404374, -0.0388418, 0.00706689, 0]
+        }
+        # Translate the intrinsics from librealsense into OpenCV
+        K  = self.camera_matrix(leftcam)
+        D  = self.fisheye_distortion(leftcam)
+        DIM = (leftcam["width"], leftcam["height"])
+        print("camera_matrix:", K)
+        print("distortion:",D)
+        print("camera:", DIM)
+        # create Undistort map for fisheye correction
+        self.map1, self.map2 = cv2.fisheye.initUndistortRectifyMap(K, D, np.eye(3), K, DIM, cv2.CV_32FC1) 
+        # create Perspective Transform for birdseye view
+        srcpts = np.float32([[400,410],[500,410],[130,550],[770,550]])
+        dstpts = np.float32([[200,100],[600,100],[200,240],[600,240]])
+        self.M = cv2.getPerspectiveTransform(srcpts,dstpts)
+
+    def undistort(self,img):    
+        """
+        Perform a fisheye undistort  
+        """
+        undistorted_img = cv2.remap(img, self.map1, self.map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)    
+        return undistorted_img 
+
+    def reverse(self,img):
+        """
+        Reverse the preprocessing performed on an image 
+        """
+        original = np.zeros((800,848,3),dtype=np.uint8)
+        img = cv2.resize(img,None,fx=2.0,fy=2.0,interpolation=cv2.INTER_AREA)
+        original[230:550, 130:770] = img
+        return original
+
+    def warpperspective(self,img):
+        """
+        Create a birdseye view from image 
+        """
+        dst = cv2.warpPerspective(img,self.M,(800,240))
+        return dst
+
+    def camera_matrix(intrinsics):
+        """
+        Returns a camera matrix K from librealsense intrinsics
+        """
+        return np.array([[intrinsics["fx"],             0, intrinsics["ppx"]],
+                        [            0, intrinsics["fy"], intrinsics["ppy"]],
+                        [            0,             0,              1]])
+
+    def fisheye_distortion(intrinsics):
+        """
+        Returns the fisheye distortion from librealsense intrinsics
+        """
+        return np.array(intrinsics["coeffs"][:4])
+
+    def run(self,img):
+        original = self.reverse(img)
+        undistorted_img = self.undistort(original)
+        birdseye_img = self.warpperspective(undistorted_img)
+        return birdseye_img
+
 
 
