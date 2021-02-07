@@ -519,9 +519,9 @@ class BirdseyeView(object):
         # create Undistort map for fisheye correction
         self.map1, self.map2 = cv2.fisheye.initUndistortRectifyMap(K, D, np.eye(3), K, DIM, cv2.CV_32FC1) 
         # create Perspective Transform for birdseye view
-        srcpts = np.float32([[400,410],[500,410],[130,550],[770,550]])
-        dstpts = np.float32([[200,100],[600,100],[200,240],[600,240]])
-        self.M = cv2.getPerspectiveTransform(srcpts,dstpts)
+        srcpts = np.float32([[371,455],[337,550],[472,472],[538,548]])  # mat + banister pts
+        dstpts = np.float32([[27,65],[73,314],[133,194],[133,314]])
+        M = cv2.getPerspectiveTransform(srcpts,dstpts)
 
     def undistort(self,img):    
         """
@@ -543,7 +543,7 @@ class BirdseyeView(object):
         """
         Create a birdseye view from image 
         """
-        dst = cv2.warpPerspective(img,self.M,(800,240))
+        dst = cv2.warpPerspective(img,self.M,(200,400))
         return dst
 
     def camera_matrix(intrinsics):
