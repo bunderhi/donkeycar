@@ -510,8 +510,8 @@ class BirdseyeView(object):
         "coeffs": [-0.00460218, 0.0404374, -0.0388418, 0.00706689, 0]
         }
         # Translate the intrinsics from librealsense into OpenCV
-        K  = self.camera_matrix(leftcam)
-        D  = self.fisheye_distortion(leftcam)
+        K  = self.camera_matrix([leftcam])
+        D  = self.fisheye_distortion([leftcam])
         DIM = (leftcam["width"], leftcam["height"])
         print("camera_matrix:", K)
         print("distortion:",D)
