@@ -65,16 +65,16 @@ def drive(cfg,verbose=True):
         def run(self, record_dict):
             if record_dict is not None:
                 print 
-                img_array = record_dict['cam/image_array']
+                img_array = record_dict['cam/image1']
                 posx = record_dict['pos/x']
                 posy = record_dict['pos/y']
                 posz = record_dict['pos/z']
                 velx = record_dict['vel/x']
                 vely = record_dict['vel/y']
                 velz = record_dict['vel/z']
-                roll = record_dict['roll']
-                pitch = record_dict['pitch']
-                yaw = record_dict['yaw']
+                roll = record_dict['rpy/roll']
+                pitch = record_dict['rpy/pitch']
+                yaw = record_dict['rpy/yaw']
                 return img_array,posx,posy,posz,velx,vely,velz,roll,pitch,yaw 
             return None,None,None,None,None,None,None,None,None,None
     

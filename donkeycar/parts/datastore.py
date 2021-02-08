@@ -303,7 +303,6 @@ class Tub(object):
                 img = Image.open((val))
                 val = np.array(img)
             data[key] = val
-            print(key)
         return data
 
     def gather_records(self):
