@@ -22,7 +22,7 @@ import donkeycar as dk
 from donkeycar.parts.datastore import TubHandler,TubReader
 from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.controller import WebFpv
-from donkeycar.parts.realsenseT265 import ImgPreProcess, ImgAlphaBlend
+from donkeycar.parts.realsenseT265 import ImgPreProcess,ImgAlphaBlend,BirdseyeView
 from donkeycar.parts.trt import TensorRTSegment
 
 from donkeycar.utils import *
@@ -51,7 +51,8 @@ def drive(cfg,verbose=True):
     
 
     # FPS Camera image viewer
-    V.add(WebFpv(), inputs=['cam/fpv'], threaded=True)
+    V.add(WebFpv(port=8890), inputs=['cam/fpv'], threaded=True)
+    V.add(WebFpv(port=8891), inputs=['inf/RealMask'], threaded=True)
 
     # Mock camera from existing tub 
     inputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
@@ -103,10 +104,15 @@ def drive(cfg,verbose=True):
         outputs=['cam/fpv'], run_condition='AI/pilot'
         )
 
+    V.add(BirdseyeView(cfg),
+        inputs=['inf/mask'],
+        outputs=['inf/RealMask'], run_condition='AI/pilot'
+        )
+    
+    
     #add tub to save data
-
-    inputs=['cam/raw']
-    types=['image_array']
+    inputs=['cam/fpv','inf/RealMask']
+    types=['image_array','image_array']
 
 
     th = TubHandler(path=cfg.DATA_PATH)
