@@ -55,11 +55,11 @@ def drive(cfg,verbose=True):
     V.add(WebFpv(port=8891), inputs=['inf/RealMask'], threaded=True)
 
     # Mock camera from existing tub 
-    inputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
+    inputs=['cam/image1', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
     types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
     
-    reader=TubReader('cam/image1', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw',path=cfg.READ_PATH)
-    V.add(reader,outputs=['input/record'])
+    reader=TubReader(path=cfg.READ_PATH)
+    V.add(reader,inputs=inputs, outputs=['input/record'])
 
     class ReadStream:
         def run(self, record):
