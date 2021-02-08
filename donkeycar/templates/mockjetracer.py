@@ -58,24 +58,33 @@ def drive(cfg,verbose=True):
     inputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw']
     types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
     
-    reader=TubReader(path=cfg.READ_PATH)
+    reader=TubReader('cam/image1', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw',path=cfg.READ_PATH)
     V.add(reader,outputs=['input/record'])
 
     class ReadStream:
-        def run(self, record_dict):
-            print (len(record_dict))
-            dict = record_dict[0]
-            if record_dict is not None:
-                img_array = dict['cam/image1']
-                posx = dict['pos/x']
-                posy = dict['pos/y']
-                posz = dict['pos/z']
-                velx = dict['vel/x']
-                vely = dict['vel/y']
-                velz = dict['vel/z']
-                roll = dict['rpy/roll']
-                pitch = dict['rpy/pitch']
-                yaw = dict['rpy/yaw']
+        def run(self, record):
+            print (len(record))
+            if record is not None:
+                img_array = record[0]
+                posx = record[1]
+                posy = record[2]
+                posz = record[3]
+                velx = record[4]
+                vely = record[5]
+                velz = record[6]
+                roll = record[7]
+                pitch = record[8]
+                yaw = record[9]
+                #img_array = dict['cam/image1']
+                #posx = dict['pos/x']
+                #posy = dict['pos/y']
+                #posz = dict['pos/z']
+                #velx = dict['vel/x']
+                #vely = dict['vel/y']
+                #velz = dict['vel/z']
+                #roll = dict['rpy/roll']
+                #pitch = dict['rpy/pitch']
+                #yaw = dict['rpy/yaw']
                 return img_array,posx,posy,posz,velx,vely,velz,roll,pitch,yaw 
             return None,None,None,None,None,None,None,None,None,None
     
