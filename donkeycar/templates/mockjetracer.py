@@ -63,18 +63,19 @@ def drive(cfg,verbose=True):
 
     class ReadStream:
         def run(self, record_dict):
+            print (len(record_dict))
+            dict = record_dict[0]
             if record_dict is not None:
-                print 
-                img_array = record_dict['cam/image1']
-                posx = record_dict['pos/x']
-                posy = record_dict['pos/y']
-                posz = record_dict['pos/z']
-                velx = record_dict['vel/x']
-                vely = record_dict['vel/y']
-                velz = record_dict['vel/z']
-                roll = record_dict['rpy/roll']
-                pitch = record_dict['rpy/pitch']
-                yaw = record_dict['rpy/yaw']
+                img_array = dict['cam/image1']
+                posx = dict['pos/x']
+                posy = dict['pos/y']
+                posz = dict['pos/z']
+                velx = dict['vel/x']
+                vely = dict['vel/y']
+                velz = dict['vel/z']
+                roll = dict['rpy/roll']
+                pitch = dict['rpy/pitch']
+                yaw = dict['rpy/yaw']
                 return img_array,posx,posy,posz,velx,vely,velz,roll,pitch,yaw 
             return None,None,None,None,None,None,None,None,None,None
     
