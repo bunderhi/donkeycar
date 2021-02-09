@@ -521,7 +521,7 @@ class BirdseyeView(object):
         # create Perspective Transform for birdseye view
         srcpts = np.float32([[371,455],[337,550],[472,472],[538,548]])  # mat + banister pts
         dstpts = np.float32([[27,65],[73,314],[133,194],[133,314]])
-        M = cv2.getPerspectiveTransform(srcpts,dstpts)
+        self.M = cv2.getPerspectiveTransform(srcpts,dstpts)
 
     def undistort(self,img):    
         """
