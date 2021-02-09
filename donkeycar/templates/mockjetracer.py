@@ -119,7 +119,7 @@ def drive(cfg,verbose=True):
     
     
     #add tub to save data
-    inputs=['cam/fpv']
+    inputs=['inf/RealMask']
     types=['image_array']
 
 
