@@ -58,24 +58,24 @@ def drive(cfg,verbose=True):
     inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9']
     types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
-    class InitializeReader:
-        def run(self):
-            arg0 = 'cam/image1'
-            arg1 = 'pos/x'
-            arg2 = 'pos/y'
-            arg3 = 'pos/z'
-            arg4 = 'vel/x'
-            arg5 = 'vel/y'
-            arg6 = 'vel/z'
-            arg7 = 'rpy/roll'
-            arg8 = 'rpy/pitch'
-            arg9 = 'rpy/yaw'
-            return arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9
-    V.add(HardcodeUserMode(), outputs=inputs)
+#    class InitializeReader:
+#        def run(self):
+#            'cam/image1' = 'cam/image1'
+#            'pos/x' = 'pos/x'
+#            arg2 = 'pos/y'
+#            arg3 = 'pos/z'
+#            arg4 = 'vel/x'
+#            arg5 = 'vel/y'
+#            arg6 = 'vel/z'
+#            arg7 = 'rpy/roll'
+#            arg8 = 'rpy/pitch'
+#            arg9 = 'rpy/yaw'
+#            return #,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9
+#    V.add(HardcodeUserMode(), outputs=inputs)
 
 
     reader=TubReader(path=cfg.READ_PATH)
-    V.add(reader,inputs=inputs,outputs=['input/record'])
+    V.add(reader,inputs=['cam/image1','pos/x'],outputs=['input/record'])
 
     class ReadStream:
         def run(self, record):
@@ -83,18 +83,18 @@ def drive(cfg,verbose=True):
             if record is not None:
                 img_array = record[0]
                 posx = record[1]
-                posy = record[2]
-                posz = record[3]
-                velx = record[4]
-                vely = record[5]
-                velz = record[6]
-                roll = record[7]
-                pitch = record[8]
-                yaw = record[9]
-                return img_array,posx,posy,posz,velx,vely,velz,roll,pitch,yaw 
-            return None,None,None,None,None,None,None,None,None,None
+            #    posy = record[2]
+            #    posz = record[3]
+            #    velx = record[4]
+            #    vely = record[5]
+            #    velz = record[6]
+            #    roll = record[7]
+            #    pitch = record[8]
+            #    yaw = record[9]
+                return img_array,posx #,posy,posz,velx,vely,velz,roll,pitch,yaw 
+            return None,None #,None,None,None,None,None,None,None,None
     
-    V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array','pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
+    V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array','pos/x'] #, 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
     
     # Mock camera feed
     #cam = ImageListCamera(path_mask=cfg.PATH_MASK)
@@ -129,8 +129,8 @@ def drive(cfg,verbose=True):
     
     
     #add tub to save data
-    inputs=['cam/fpv','inf/RealMask']
-    types=['image_array','image_array']
+    inputs=['cam/fpv']
+    types=['image_array']
 
 
     th = TubHandler(path=cfg.DATA_PATH)
