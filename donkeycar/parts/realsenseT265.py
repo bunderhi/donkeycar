@@ -534,6 +534,7 @@ class BirdseyeView(object):
         """
         Reverse the preprocessing performed on an image 
         """
+        img = cv2.cvtColor(img,cv2.COLOR_GREY2RGB)
         original = np.zeros((800,848,3),dtype=np.uint8)
         img = cv2.resize(img,None,fx=2.0,fy=2.0,interpolation=cv2.INTER_AREA)
         original[230:550, 130:770] = img
