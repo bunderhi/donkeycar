@@ -569,7 +569,7 @@ class BirdseyeView(object):
         undistorted_img = self.undistort(original)
         redm = cv2.cvtColor(undistorted_img,cv2.COLOR_RGB2GRAY).reshape(1,800,848)
         redmask = np.vstack((self.fill,redm)).transpose(1,2,0)
-        aimg = cv2.addWeighted(redmask, self.alpha, self.oimg, self.beta, 0.0)
+        aimg = cv2.addWeighted(redmask, self.alpha, self.aimg, self.beta, 0.0)
         birdseye_img = self.warpperspective(aimg)
         return birdseye_img
 
