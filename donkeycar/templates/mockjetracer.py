@@ -58,10 +58,10 @@ def drive(cfg,verbose=True):
     inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9']
     types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
-#    class InitializeReader:
-#        def run(self):
-#            'cam/image1' = 'cam/image1'
-#            'pos/x' = 'pos/x'
+    class InitializeReader:
+        def run(self):
+            arg0 = 'cam/image1'
+            arg1 = 'pos/x'
 #            arg2 = 'pos/y'
 #            arg3 = 'pos/z'
 #            arg4 = 'vel/x'
@@ -70,12 +70,12 @@ def drive(cfg,verbose=True):
 #            arg7 = 'rpy/roll'
 #            arg8 = 'rpy/pitch'
 #            arg9 = 'rpy/yaw'
-#            return #,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9
-#    V.add(HardcodeUserMode(), outputs=inputs)
+            return arg0,arg1 #,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9
+    V.add(InitializeReader(), outputs=['arg0','arg1'])
 
 
     reader=TubReader(path=cfg.READ_PATH)
-    V.add(reader,inputs=['cam/image1','pos/x'],outputs=['input/record'])
+    V.add(reader,inputs=['arg0','arg1'],outputs=['input/record'])
 
     class ReadStream:
         def run(self, record):
