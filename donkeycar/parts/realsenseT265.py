@@ -522,6 +522,9 @@ class BirdseyeView(object):
         srcpts = np.float32([[371,455],[337,550],[472,472],[538,548]])  # mat + banister pts
         dstpts = np.float32([[27,65],[73,314],[133,194],[133,314]])
         self.M = cv2.getPerspectiveTransform(srcpts,dstpts)
+        self.alpha = 0.5
+        self.beta = (1.0 - alpha)
+        self.fill = np.zeros((2,800,848),dtype=np.uint8)
 
     def undistort(self,img):    
         """
@@ -564,7 +567,10 @@ class BirdseyeView(object):
     def run(self,img):
         original = self.reverse(img)
         undistorted_img = self.undistort(original)
-        birdseye_img = self.warpperspective(undistorted_img)
+        redm = cv2.cvtColor(undistorted_img,cv2.COLOR_RGB2GRAY).reshape(1,800,848)
+        redmask = np.vstack((self.fill,redm)).transpose(1,2,0)
+        aimg = cv2.addWeighted(redmask, self.alpha, self.oimg, self.beta, 0.0)
+        birdseye_img = self.warpperspective(aimg)
         return birdseye_img
 
 

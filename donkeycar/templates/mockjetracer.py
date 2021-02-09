@@ -119,7 +119,7 @@ def drive(cfg,verbose=True):
     
     
     #add tub to save data
-    inputs=['inf/RealMask']
+    inputs=['inf/mask']
     types=['image_array']
 
 
