@@ -94,7 +94,7 @@ def drive(cfg,verbose=True):
                 return img_array,posx #,posy,posz,velx,vely,velz,roll,pitch,yaw 
             return None,None #,None,None,None,None,None,None,None,None
     
-    V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array','pos/x'] #, 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
+    V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array','pos/x']) #, 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
     
     # Mock camera feed
     #cam = ImageListCamera(path_mask=cfg.PATH_MASK)
