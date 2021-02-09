@@ -523,7 +523,7 @@ class BirdseyeView(object):
         dstpts = np.float32([[27,65],[73,314],[133,194],[133,314]])
         self.M = cv2.getPerspectiveTransform(srcpts,dstpts)
         self.alpha = 0.5
-        self.beta = (1.0 - alpha)
+        self.beta = (1.0 - self.alpha)
         self.fill = np.zeros((2,800,848),dtype=np.uint8)
 
     def undistort(self,img):    
