@@ -113,14 +113,13 @@ def drive(cfg,verbose=True):
         )
 
     V.add(BirdseyeView(cfg),
-        inputs=['inf/mask'],
+        inputs=['inf/mask','vel/x','vel/y','vel/z'],
         outputs=['inf/RealMask'], run_condition='AI/pilot'
         )
     
-    
     #add tub to save data
-    inputs=['inf/mask']
-    types=['image_array']
+    inputs=['inf/RealMask','pos/x','pos/y','pos/z','vel/x','vel/y','vel/z','rpy/roll','rpy/pitch','rpy/yaw']
+    types=types
 
 
     th = TubHandler(path=cfg.DATA_PATH)

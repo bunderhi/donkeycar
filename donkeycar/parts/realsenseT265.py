@@ -537,7 +537,7 @@ class BirdseyeView(object):
         """
         Reverse the preprocessing performed on an image 
         """
-        img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
+        img = cv2.cvtColor(img*255,cv2.COLOR_GRAY2RGB)
         original = np.zeros((800,848,3),dtype=np.uint8)
         img = cv2.resize(img,None,fx=2.0,fy=2.0,interpolation=cv2.INTER_AREA)
         original[230:550, 130:770] = img
@@ -564,12 +564,74 @@ class BirdseyeView(object):
         """
         return np.array(intrinsics["coeffs"][:4])
 
-    def run(self,img):
+    def draw_text(self,
+        img,
+        *,
+        text,
+        uv_top_left,
+        color=(255, 255, 255),
+        fontScale=0.5,
+        thickness=1,
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        outline_color=(0, 0, 0),
+        line_spacing=1.0,
+    ):
+        """
+        Draws multiline with an outline.
+        """
+        assert isinstance(text, str)
+
+        uv_top_left = np.array(uv_top_left, dtype=float)
+        assert uv_top_left.shape == (2,)
+
+        for line in text.splitlines():
+            (w, h), _ = cv2.getTextSize(
+                text=line,
+                fontFace=fontFace,
+                fontScale=fontScale,
+                thickness=thickness,
+            )
+            uv_bottom_left_i = uv_top_left + [0, h]
+            org = tuple(uv_bottom_left_i.astype(int))
+
+            if outline_color is not None:
+                cv2.putText(
+                    img,
+                    text=line,
+                    org=org,
+                    fontFace=fontFace,
+                    fontScale=fontScale,
+                    color=outline_color,
+                    thickness=thickness * 3,
+                    lineType=cv2.LINE_AA,
+                )
+            cv2.putText(
+                img,
+                text=line,
+                org=org,
+                fontFace=fontFace,
+                fontScale=fontScale,
+                color=color,
+                thickness=thickness,
+                lineType=cv2.LINE_AA,
+            )
+
+            uv_top_left += [0, h * line_spacing]
+
+
+    def run(self,img,velx,vely,velz):
+
         original = self.reverse(img)
         undistorted_img = self.undistort(original)
         redm = cv2.cvtColor(undistorted_img,cv2.COLOR_RGB2GRAY).reshape(1,800,848)
         redmask = np.vstack((self.fill,redm)).transpose(1,2,0)
         birdseye_img = self.warpperspective(redmask)
+        
+        vx = "{:.1f}".format(velx *100)
+        vy = "{:.1f}".format(vely *100)
+        vz = "{:.1f}".format(velz *100)
+        lines = vx + '\n' + vz + '\n' + vy
+        self.draw_text(birdseye_img,lines,(100,200))
         return birdseye_img
 
 
