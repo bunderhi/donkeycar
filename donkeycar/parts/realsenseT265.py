@@ -627,11 +627,11 @@ class BirdseyeView(object):
         redmask = np.vstack((self.fill,redm)).transpose(1,2,0)
         birdseye_img = self.warpperspective(redmask)
         
-        vx = "{:.1f}".format(velx *100)
-        vy = "{:.1f}".format(vely *100)
-        vz = "{:.1f}".format(velz *100)
+        vx = "{:.1f}".format(velx *100.0)
+        vy = "{:.1f}".format(vely *100.0)
+        vz = "{:.1f}".format(velz *100.0)
         lines = vx + '\n' + vz + '\n' + vy
-        self.draw_text(birdseye_img,lines,uv_top_left=(100,200))
+        self.draw_text(birdseye_img,text=lines,uv_top_left=(120,240))
         return birdseye_img
 
 
