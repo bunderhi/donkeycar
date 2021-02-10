@@ -631,7 +631,7 @@ class BirdseyeView(object):
         vy = "{:.1f}".format(vely *100)
         vz = "{:.1f}".format(velz *100)
         lines = vx + '\n' + vz + '\n' + vy
-        self.draw_text(birdseye_img,lines,(100,200))
+        self.draw_text(birdseye_img,lines,uv_top_left=(100,200))
         return birdseye_img
 
 
