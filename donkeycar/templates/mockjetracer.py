@@ -56,7 +56,7 @@ def drive(cfg,verbose=True):
 
     # Mock camera from existing tub 
     inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9']
-    types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+    
 
     class InitializeReader:
         def run(self):
@@ -72,19 +72,19 @@ def drive(cfg,verbose=True):
             print (len(record))
             if record is not None:
                 img_array = record[0]
-                posx = record[1]
-                posy = record[2]
-                posz = record[3]
-                velx = record[4]
-                vely = record[5]
-                velz = record[6]
+                posy = record[1]   # real posy = camera posx
+                posz = -record[2]   # real posz = camera -posy
+                posx = -record[3]   # real posx = camera -posz
+                turnvel = record[4]   # left/right vel  = camera velx
+                #vely = record[5]   
+                fwdvel = record[6]   # forward vel  = camera -velz
                 roll = record[7]
                 pitch = record[8]
                 yaw = record[9]
-                return img_array,posx,posy,posz,velx,vely,velz,roll,pitch,yaw 
-            return None,None,None,None,None,None,None,None,None,None
+                return img_array,posx,posy,posz,turnvel,fwdvel,roll,pitch,yaw 
+            return None,None,None,None,None,None,None,None,None
     
-    V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/x', 'vel/y', 'vel/z', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
+    V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/turn','vel/fwd', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
     
     # Mock camera feed
     #cam = ImageListCamera(path_mask=cfg.PATH_MASK)
@@ -118,8 +118,8 @@ def drive(cfg,verbose=True):
         )
     
     #add tub to save data
-    inputs=['inf/RealMask','pos/x','pos/y','pos/z','vel/x','vel/y','vel/z','rpy/roll','rpy/pitch','rpy/yaw']
-    types=types
+    inputs=['inf/RealMask','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/roll','rpy/pitch','rpy/yaw']
+    types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
 
     th = TubHandler(path=cfg.DATA_PATH)

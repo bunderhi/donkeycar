@@ -21,9 +21,9 @@ class RPY:
         y = rotation.x
         z = -rotation.y
 
-        self.pitch =  -asin(2.0 * (x*z - w*y)) * 180.0 / pi
-        self.roll  =  atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) * 180.0 / pi
-        self.yaw   =  atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) * 180.0 / pi
+        self.pitch =  -asin(2.0 * (x*z - w*y)) 
+        self.roll  =  atan2(2.0 * (w*x + y*z), w*w - x*x - y*y + z*z) 
+        self.yaw   =  atan2(2.0 * (w*z + x*y), w*w + x*x - y*y - z*z) # * 180.0 / pi (rad to degree)
 
 
 class RS_T265(object):
@@ -345,11 +345,11 @@ class RS_T265RAW(object):
             self.vel = data.velocity
             self.acc = data.acceleration
             self.rotation = data.rotation
-            logging.info('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z))
+            self.mapper_confidence = data.mapper_confidence
+            logging.info('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z, self.mapper_confidence ))
 
             # Compute roll, pitch, and yaw
             self.rpy = RPY(self.rotation)
-            
             logging.info('realsense RPandY(%f, %f, %f)' % (self.rpy.roll,self.rpy.pitch,self.rpy.yaw))
         
         if self.image_output:
