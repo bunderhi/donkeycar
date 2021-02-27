@@ -22,7 +22,8 @@ import donkeycar as dk
 from donkeycar.parts.datastore import TubHandler,TubReader
 from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.controller import WebFpv
-from donkeycar.parts.realsenseT265 import ImgPreProcess,ImgAlphaBlend,BirdseyeView
+from donkeycar.parts.realsenseT265 import ImgPreProcess,ImgAlphaBlend
+from donkeycar.parts.planner import BirdseyeView, PlanPath, PlanMap
 from donkeycar.parts.trt import TensorRTSegment
 
 from donkeycar.utils import *
@@ -52,7 +53,7 @@ def drive(cfg,verbose=True):
 
     # FPS Camera image viewer
     V.add(WebFpv(port=8890), inputs=['cam/fpv'], threaded=True)
-    V.add(WebFpv(port=8891), inputs=['inf/RealMask'], threaded=True)
+    V.add(WebFpv(port=8891), inputs=['plan/map'], threaded=True)
 
     # Mock camera from existing tub 
     inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9']
@@ -113,12 +114,22 @@ def drive(cfg,verbose=True):
         )
 
     V.add(BirdseyeView(cfg),
-        inputs=['inf/mask','vel/x','vel/y','vel/z'],
-        outputs=['inf/RealMask'], run_condition='AI/pilot'
+        inputs=['inf/mask'],
+        outputs=['plan/freespace'], run_condition='AI/pilot'
         )
     
+    V.add(PlanPath(cfg),
+        inputs=['plan/freespace'],
+        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathx'], run_condition='AI/pilot'
+        )
+    
+    V.add(PlanMap(cfg),
+        inputs=['plan/freespace','vel/turn','vel/fwd','plan/waypointx','plan/waypointy','plan/pathx','plan/pathx'],
+        outputs=['plan/map'], run_condition='AI/pilot'
+        )
+
     #add tub to save data
-    inputs=['inf/RealMask','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/roll','rpy/pitch','rpy/yaw']
+    inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/roll','rpy/pitch','rpy/yaw']
     types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
 
