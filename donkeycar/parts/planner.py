@@ -224,7 +224,7 @@ class PlanMap(object):
             uv_top_left += [0, h * line_spacing]
 
     
-    def run(self,mask,velfwd,velturn,waypntx,waypnty,rax,ray):
+    def run(self,mask,velturn,velfwd,waypntx,waypnty,rax,ray):
         #print(rax,ray)
         #waypntxy = np.stack((waypntx,waypnty),axis=-1).reshape((-1,1,2))
         raxy = np.stack((rax,ray),axis=-1).reshape((-1,1,2))
@@ -241,8 +241,8 @@ class PlanMap(object):
         vturn = "{:.1f}".format(velturn*100.0)
         lines = vfwd + '\n' + '\n' + vturn
         self.draw_text(redmask,text=lines,uv_top_left=(120,240))
-        #ex = floor(105+(velturn*100.0))
-        #ey = floor(400+(velfwd*100.0))
-        #cv2.arrowedLine(redmask,(105,400),(ex,ey),(0, 255, 0), 3, cv2.LINE_AA, 0, 0.1)
+        ex = floor(105+(velturn*100.0))
+        ey = floor(400+(velfwd*100.0))
+        cv2.arrowedLine(redmask,(105,400),(ex,ey),(0, 255, 0), 3, cv2.LINE_AA, 0, 0.1)
         return redmask
 
