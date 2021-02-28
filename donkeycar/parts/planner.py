@@ -153,7 +153,7 @@ class PlanPath(object):
 
     def run(self,mask):
         waypntx,waypnty = self.setgoal(mask)
-        rax, ray = self.approximate_b_spline_path(waypntx,waypnty,self.n_course_point)
+        rax, ray = self.approximate_b_spline_path(waypntx,waypnty)
         return waypntx,waypnty,rax,ray
 
 
