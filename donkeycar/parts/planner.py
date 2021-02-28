@@ -89,6 +89,11 @@ class PlanPath(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.n_path_points = 10
+        self.waypntx = [100,100,100,100]
+        self.waypntxy = [0,100,200,300]
+        self.rax = [0,0,0,0,0,0,0,0,0,0]
+        self.ray = [0,0,0,0,0,0,0,0,0,0]
+
 
     
     def approximate_b_spline_path(self,x: list, y: list, degree: int = 3) -> tuple:
@@ -152,9 +157,9 @@ class PlanPath(object):
         return waypntx,waypnty
 
     def run(self,mask):
-        waypntx,waypnty = self.setgoal(mask)
-        rax, ray = self.approximate_b_spline_path(waypntx,waypnty)
-        return waypntx,waypnty,rax,ray
+        self.waypntx,self.waypnty = self.setgoal(mask)
+        self.rax, self.ray = self.approximate_b_spline_path(self.waypntx,self.waypnty)
+        return self.waypntx,self.waypnty,self.rax,self.ray
 
 
 class PlanMap(object):
