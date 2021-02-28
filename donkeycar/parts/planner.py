@@ -101,7 +101,6 @@ class PlanPath(object):
         approximate points with a B-Spline path
         :param x: x position list of approximated points
         :param y: y position list of approximated points
-        :param n_path_points: number of path points
         :param degree: (Optional) B Spline curve degree
         :return: x and y position list of the result path
         """
@@ -136,7 +135,6 @@ class PlanPath(object):
             val = arr.shape[axis] - np.flip(mask, axis=axis).argmax(axis=axis) - 1
             return np.where(mask.any(axis=axis), val, invalid_val)
 
-        goal = None
         left = first_nonzero(mask, axis=1, invalid_val=-1)
         right = last_nonzero(mask, axis=1, invalid_val=-1)
         # print (left.shape)
@@ -149,8 +147,9 @@ class PlanPath(object):
                     goaly = idx[0]
                     # print ("Goal",goalx,goaly)
                     break
-        
-        waypnty = np.linspace(goaly,400,num=4,dtype=np.uint8)        
+        intrvl = floor((400 - goaly)/3)
+        waypnty = [goaly,goaly + intrvl,goaly + 2 * intrvl,400]
+        #waypnty = np.linspace(goaly,400,num=4,dtype=np.uint8)        
         waypntx1 = floor(((left[waypnty[1]] + right[waypnty[1]]) / 2))
         waypntx2 = floor(((left[waypnty[2]] + right[waypnty[2]]) / 2))
         waypntx = [goalx,waypntx1,waypntx2,105]
@@ -223,8 +222,11 @@ class PlanMap(object):
 
     
     def run(self,mask,velfwd,velturn,waypntx,waypnty,rax,ray):
+        print(rax,ray)
         waypntxy = np.stack((waypntx,waypnty),axis=-1).reshape((-1,1,2))
         raxy = np.stack((rax,ray),axis=-1).reshape((-1,1,2))
+        print(waypntxy.shape)
+        print(raxy.shape)
         redm = mask.reshape(1,400,200)
         redmask = np.vstack((self.fill,redm*255)).transpose(1,2,0)
 
