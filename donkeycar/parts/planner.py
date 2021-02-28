@@ -88,7 +88,7 @@ class PlanPath(object):
     """
     def __init__(self, cfg):
         self.cfg = cfg
-        self.n_course_point = 10
+        self.n_path_points = 10
 
     
     def approximate_b_spline_path(self,x: list, y: list, degree: int = 3) -> tuple:
