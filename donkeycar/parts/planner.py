@@ -225,8 +225,8 @@ class PlanMap(object):
 
     
     def run(self,mask,velfwd,velturn,waypntx,waypnty,rax,ray):
-        print(rax,ray)
-        waypntxy = np.stack((waypntx,waypnty),axis=-1).reshape((-1,1,2))
+        #print(rax,ray)
+        #waypntxy = np.stack((waypntx,waypnty),axis=-1).reshape((-1,1,2))
         raxy = np.stack((rax,ray),axis=-1).reshape((-1,1,2))
         #print(waypntxy.shape)
         #print(raxy.shape)
@@ -234,11 +234,13 @@ class PlanMap(object):
         #redm = mask.reshape(1,400,200)
         #redmask = np.vstack((self.fill,redm*255)).transpose(1,2,0)
         redmask = cv2.cvtColor(mask*200,cv2.COLOR_GRAY2RGB)
-        cv2.polylines(redmask,[waypntxy],False,(255,0,0),3)
+        #cv2.polylines(redmask,[waypntxy],False,(255,0,0),3)
         cv2.polylines(redmask,[raxy],False,(255,255,0),3)
-        vx = "{:.1f}".format(velfwd *100.0)
-        vy = "{:.1f}".format(velturn *100.0)
-        lines = vx + '\n' + '\n' + vy
+
+        vfwd = "{:.1f}".format(velfwd*100.0)
+        vturn = "{:.1f}".format(velturn*100.0)
+        lines = vfwd + '\n' + '\n' + vturn
         self.draw_text(redmask,text=lines,uv_top_left=(120,240))
+        cv2.arrowedLine(redmask,(105,400),(105+(velfwd*100.0),400+(velturn*100.0)),(0, 255, 0), 3, cv2.LINE_AA, 0, 0.1)
         return redmask
 
