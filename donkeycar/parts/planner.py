@@ -225,17 +225,17 @@ class PlanMap(object):
         print(rax,ray)
         waypntxy = np.stack((waypntx,waypnty),axis=-1).reshape((-1,1,2))
         raxy = np.stack((rax,ray),axis=-1).reshape((-1,1,2))
-        print(waypntxy.shape)
-        print(raxy.shape)
-        print(raxy)
-        redm = mask.reshape(1,400,200)
-        redmask = np.vstack((self.fill,redm*255)).transpose(1,2,0)
-
+        #print(waypntxy.shape)
+        #print(raxy.shape)
+        #print(raxy)
+        #redm = mask.reshape(1,400,200)
+        #redmask = np.vstack((self.fill,redm*255)).transpose(1,2,0)
+        redmask = cv2.cvtColor(mask*200,cv2.COLOR_GRAY2RGB)
+        cv2.polylines(redmask,[waypntxy],False,(255,0,0),3)
+        cv2.polylines(redmask,[raxy],False,(255,255,0),3)
         vx = "{:.1f}".format(velfwd *100.0)
         vy = "{:.1f}".format(velturn *100.0)
         lines = vx + '\n' + '\n' + vy
         self.draw_text(redmask,text=lines,uv_top_left=(120,240))
-        cv2.polylines(redmask,[waypntxy],False,(0,255,255))
-        cv2.polylines(redmask,[raxy],False,(255,255,0))
         return redmask
 
