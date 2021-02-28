@@ -227,6 +227,7 @@ class PlanMap(object):
         raxy = np.stack((rax,ray),axis=-1).reshape((-1,1,2))
         print(waypntxy.shape)
         print(raxy.shape)
+        print(raxy)
         redm = mask.reshape(1,400,200)
         redmask = np.vstack((self.fill,redm*255)).transpose(1,2,0)
 
