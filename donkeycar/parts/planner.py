@@ -115,9 +115,12 @@ class PlanPath(object):
         y_list[1] = y + [0.0, 0.0, 0.0, 0.0]
 
         ipl_t = np.linspace(0.0, len(x) - 1, self.n_path_points)
-        rx = scipy_interpolate.splev(ipl_t, x_list)
-        ry = scipy_interpolate.splev(ipl_t, y_list)
-
+        rrx = scipy_interpolate.splev(ipl_t, x_list)
+        rry = scipy_interpolate.splev(ipl_t, y_list)
+        rx = np.empty_like(rrx, dtype=np.int64)
+        np.floor(rrx, rx,casting="unsafe")
+        ry = np.empty_like(rry, dtype=np.int64)
+        np.floor(rry, ry,casting="unsafe")
         return rx, ry
 
     def setgoal(self,mask):
