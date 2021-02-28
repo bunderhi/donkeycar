@@ -241,6 +241,8 @@ class PlanMap(object):
         vturn = "{:.1f}".format(velturn*100.0)
         lines = vfwd + '\n' + '\n' + vturn
         self.draw_text(redmask,text=lines,uv_top_left=(120,240))
-        cv2.arrowedLine(redmask,(105,400),(105+(velfwd*100.0),400+(velturn*100.0)),(0, 255, 0), 3, cv2.LINE_AA, 0, 0.1)
+        ex = floor(105+(velturn*100.0))
+        ey = floor(400+(velfwd*100.0))
+        cv2.arrowedLine(redmask,(105,400),(ex,ey),(0, 255, 0), 3, cv2.LINE_AA, 0, 0.1)
         return redmask
 
