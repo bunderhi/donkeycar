@@ -120,11 +120,11 @@ def drive(cfg,verbose=True):
     
     V.add(PlanPath(cfg),
         inputs=['plan/freespace'],
-        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathx'], run_condition='AI/pilot'
+        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy'], run_condition='AI/pilot'
         )
     
     V.add(PlanMap(cfg),
-        inputs=['plan/freespace','vel/turn','vel/fwd','plan/waypointx','plan/waypointy','plan/pathx','plan/pathx'],
+        inputs=['plan/freespace','vel/turn','vel/fwd','plan/waypointx','plan/waypointy','plan/pathx','plan/pathy'],
         outputs=['plan/map'], run_condition='AI/pilot'
         )
 
