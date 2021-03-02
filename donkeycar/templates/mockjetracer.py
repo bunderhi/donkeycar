@@ -24,6 +24,7 @@ from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.controller import WebFpv
 from donkeycar.parts.realsenseT265 import ImgPreProcess,ImgAlphaBlend
 from donkeycar.parts.planner import BirdseyeView, PlanPath, PlanMap
+from donkeycar.parts.pathtracker import StanleyController
 from donkeycar.parts.trt import TensorRTSegment
 
 from donkeycar.utils import *
@@ -120,11 +121,16 @@ def drive(cfg,verbose=True):
     
     V.add(PlanPath(cfg),
         inputs=['plan/freespace'],
-        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy'], run_condition='AI/pilot'
+        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy','plan/pathyaw'], run_condition='AI/pilot'
         )
     
+    V.add(StanleyController(cfg),
+        inputs=['vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw'],
+        outputs=['plan/delta','plan/accel'], run_condition='AI/pilot'
+        )
+
     V.add(PlanMap(cfg),
-        inputs=['plan/freespace','vel/turn','vel/fwd','plan/waypointx','plan/waypointy','plan/pathx','plan/pathy'],
+        inputs=['plan/freespace','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/accel'],
         outputs=['plan/map'], run_condition='AI/pilot'
         )
 

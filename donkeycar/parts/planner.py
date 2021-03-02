@@ -1,11 +1,14 @@
 '''
 File: planner.py
 Parts for path planning and tracking
+
+includes Cubic spline planner
+Author: Atsushi Sakai(@Atsushi_twi)
 '''
 import numpy as np
 import cv2
-import scipy.interpolate as scipy_interpolate
-from math import floor
+import bisect
+import math
 
 class BirdseyeView(object):
     '''
@@ -82,46 +85,192 @@ class BirdseyeView(object):
         birdseye_mask = self.warpperspective(redm)
         return birdseye_mask
 
+class Spline:
+    """
+    Cubic Spline class
+    """
+
+    def __init__(self, x, y):
+        self.b, self.c, self.d, self.w = [], [], [], []
+
+        self.x = x
+        self.y = y
+
+        self.nx = len(x)  # dimension of x
+        h = np.diff(x)
+
+        # calc coefficient c
+        self.a = [iy for iy in y]
+
+        # calc coefficient c
+        A = self.__calc_A(h)
+        B = self.__calc_B(h)
+        self.c = np.linalg.solve(A, B)
+        #  print(self.c1)
+
+        # calc spline coefficient b and d
+        for i in range(self.nx - 1):
+            self.d.append((self.c[i + 1] - self.c[i]) / (3.0 * h[i]))
+            tb = (self.a[i + 1] - self.a[i]) / h[i] - h[i] * \
+                (self.c[i + 1] + 2.0 * self.c[i]) / 3.0
+            self.b.append(tb)
+
+    def calc(self, t):
+        """
+        Calc position
+        if t is outside of the input x, return None
+        """
+
+        if t < self.x[0]:
+            return None
+        elif t > self.x[-1]:
+            return None
+
+        i = self.__search_index(t)
+        dx = t - self.x[i]
+        result = self.a[i] + self.b[i] * dx + \
+            self.c[i] * dx ** 2.0 + self.d[i] * dx ** 3.0
+
+        return result
+
+    def calcd(self, t):
+        """
+        Calc first derivative
+        if t is outside of the input x, return None
+        """
+
+        if t < self.x[0]:
+            return None
+        elif t > self.x[-1]:
+            return None
+
+        i = self.__search_index(t)
+        dx = t - self.x[i]
+        result = self.b[i] + 2.0 * self.c[i] * dx + 3.0 * self.d[i] * dx ** 2.0
+        return result
+
+    def calcdd(self, t):
+        """
+        Calc second derivative
+        """
+
+        if t < self.x[0]:
+            return None
+        elif t > self.x[-1]:
+            return None
+
+        i = self.__search_index(t)
+        dx = t - self.x[i]
+        result = 2.0 * self.c[i] + 6.0 * self.d[i] * dx
+        return result
+
+    def __search_index(self, x):
+        """
+        search data segment index
+        """
+        return bisect.bisect(self.x, x) - 1
+
+    def __calc_A(self, h):
+        """
+        calc matrix A for spline coefficient c
+        """
+        A = np.zeros((self.nx, self.nx))
+        A[0, 0] = 1.0
+        for i in range(self.nx - 1):
+            if i != (self.nx - 2):
+                A[i + 1, i + 1] = 2.0 * (h[i] + h[i + 1])
+            A[i + 1, i] = h[i]
+            A[i, i + 1] = h[i]
+
+        A[0, 1] = 0.0
+        A[self.nx - 1, self.nx - 2] = 0.0
+        A[self.nx - 1, self.nx - 1] = 1.0
+        #  print(A)
+        return A
+
+    def __calc_B(self, h):
+        """
+        calc matrix B for spline coefficient c
+        """
+        B = np.zeros(self.nx)
+        for i in range(self.nx - 2):
+            B[i + 1] = 3.0 * (self.a[i + 2] - self.a[i + 1]) / \
+                h[i + 1] - 3.0 * (self.a[i + 1] - self.a[i]) / h[i]
+        return B
+
+
+class Spline2D:
+    """
+    2D Cubic Spline class
+    """
+
+    def __init__(self, x, y):
+        self.s = self.__calc_s(x, y)
+        self.sx = Spline(self.s, x)
+        self.sy = Spline(self.s, y)
+
+    def __calc_s(self, x, y):
+        dx = np.diff(x)
+        dy = np.diff(y)
+        self.ds = np.hypot(dx, dy)
+        s = [0]
+        s.extend(np.cumsum(self.ds))
+        return s
+
+    def calc_position(self, s):
+        """
+        calc position
+        """
+        x = self.sx.calc(s)
+        y = self.sy.calc(s)
+
+        return x, y
+
+    def calc_curvature(self, s):
+        """
+        calc curvature
+        """
+        dx = self.sx.calcd(s)
+        ddx = self.sx.calcdd(s)
+        dy = self.sy.calcd(s)
+        ddy = self.sy.calcdd(s)
+        k = (ddy * dx - ddx * dy) / ((dx ** 2 + dy ** 2)**(3 / 2))
+        return k
+
+    def calc_yaw(self, s):
+        """
+        calc yaw
+        """
+        dx = self.sx.calcd(s)
+        dy = self.sy.calcd(s)
+        yaw = math.atan2(dy, dx)
+        return yaw
+
 class PlanPath(object):
     """
     Determine a goal and a travel path 
     """
     def __init__(self, cfg):
         self.cfg = cfg
-        self.n_path_points = 10
         self.waypntx = [100,100,100,100]
         self.waypntxy = [0,100,200,300]
-        self.rax = [0,0,0,0,0,0,0,0,0,0]
-        self.ray = [0,0,0,0,0,0,0,0,0,0]
+        self.rax = []
+        self.ray = []
+        self.ryaw = []
+        self.ds = cfg.PATH_INCREMENT  # 400/40 = 10 path points 
 
+    def calc_spline_course(self,x, y):
+        sp = Spline2D(x, y)
+        s = list(np.arange(0, sp.s[-1], self.ds))
 
-    
-    def approximate_b_spline_path(self,x: list, y: list, degree: int = 3) -> tuple:
-        """
-        approximate points with a B-Spline path
-        :param x: x position list of approximated points
-        :param y: y position list of approximated points
-        :param degree: (Optional) B Spline curve degree
-        :return: x and y position list of the result path
-        """
-        t = range(len(x))
-        x_tup = scipy_interpolate.splrep(t, x, k=degree)
-        y_tup = scipy_interpolate.splrep(t, y, k=degree)
-
-        x_list = list(x_tup)
-        x_list[1] = x + [0.0, 0.0, 0.0, 0.0]
-
-        y_list = list(y_tup)
-        y_list[1] = y + [0.0, 0.0, 0.0, 0.0]
-
-        ipl_t = np.linspace(0.0, len(x) - 1, self.n_path_points)
-        rrx = scipy_interpolate.splev(ipl_t, x_list)
-        rry = scipy_interpolate.splev(ipl_t, y_list)
-        rx = np.empty_like(rrx, dtype=np.int64)
-        np.floor(rrx, rx,casting="unsafe")
-        ry = np.empty_like(rry, dtype=np.int64)
-        np.floor(rry, ry,casting="unsafe")
-        return rx, ry
+        rx, ry, ryaw, rk = [], [], [], []
+        for i_s in s:
+            ix, iy = sp.calc_position(i_s)
+            rx.append(ix)
+            ry.append(iy)
+            ryaw.append(sp.calc_yaw(i_s))
+            rk.append(sp.calc_curvature(i_s))
+        return rx, ry, ryaw
 
     def setgoal(self,mask):
         """ 
@@ -144,24 +293,23 @@ class PlanPath(object):
         # find topmost row with at least one nonzero entry
         for idx, x in np.ndenumerate(left):   
             if x>-1:
-                #print(idx[0],x,right[idx])
                 if right[idx] > x:
-                    goalx = floor(((x + right[idx]) / 2))
+                    goalx = math.floor(((x + right[idx]) / 2))
                     goaly = idx[0]
-                    # print ("Goal",goalx,goaly)
                     break
-        intrvl = floor((400 - goaly)/3)
-        waypnty = [goaly,goaly + intrvl,goaly + 2 * intrvl,400]
-        #waypnty = np.linspace(goaly,400,num=4,dtype=np.uint8)        
-        waypntx1 = floor(((left[waypnty[1]] + right[waypnty[1]]) / 2))
-        waypntx2 = floor(((left[waypnty[2]] + right[waypnty[2]]) / 2))
-        waypntx = [goalx,waypntx1,waypntx2,105]
+        intrvl = math.floor((400 - goaly)/3)
+        waypnty = [400,400 - intrvl,400 - 2 * intrvl,goaly]
+        waypntx1 = math.floor((left[waypnty[1]] + right[waypnty[1]]) / 2)
+        waypntx2 = math.floor((left[waypnty[2]] + right[waypnty[2]]) / 2)
+        waypntx = [105,waypntx1,waypntx2,goalx]
         return waypntx,waypnty
 
     def run(self,mask):
+        # waypoints
         self.waypntx,self.waypnty = self.setgoal(mask)
-        self.rax, self.ray = self.approximate_b_spline_path(self.waypntx,self.waypnty)
-        return self.waypntx,self.waypnty,self.rax,self.ray
+        # path
+        self.rax, self.ray, self.ryaw = self.calc_spline_course(self.waypntx,self.waypnty)  
+        return self.waypntx,self.waypnty,self.rax,self.ray,self.ryaw
 
 
 class PlanMap(object):
@@ -224,25 +372,22 @@ class PlanMap(object):
             uv_top_left += [0, h * line_spacing]
 
     
-    def run(self,mask,velturn,velfwd,waypntx,waypnty,rax,ray):
-        #print(rax,ray)
-        #waypntxy = np.stack((waypntx,waypnty),axis=-1).reshape((-1,1,2))
+    def run(self,mask,velturn,velfwd,rx,ry,delta,accel):
+        rax = np.empty_like(rx, dtype=np.int64)
+        np.floor(rx, rax,casting="unsafe")
+        ray = np.empty_like(ry, dtype=np.int64)
+        np.floor(ry, ray,casting="unsafe")
         raxy = np.stack((rax,ray),axis=-1).reshape((-1,1,2))
-        #print(waypntxy.shape)
-        #print(raxy.shape)
-        #print(raxy)
-        #redm = mask.reshape(1,400,200)
-        #redmask = np.vstack((self.fill,redm*255)).transpose(1,2,0)
         redmask = cv2.cvtColor(mask*200,cv2.COLOR_GRAY2RGB)
         #cv2.polylines(redmask,[waypntxy],False,(255,0,0),3)
         cv2.polylines(redmask,[raxy],False,(255,255,0),3)
 
-        vfwd = "{:.1f}".format(velfwd*100.0)
-        vturn = "{:.1f}".format(velturn*100.0)
-        lines = vfwd + '\n' + '\n' + vturn
+        deltad = "{:.1f}".format(np.degrees(delta))
+        lines = deltad + '\n' + '\n' + accel
         self.draw_text(redmask,text=lines,uv_top_left=(120,240))
-        ex = floor(105-(velturn*100.0))
-        ey = floor(400+(velfwd*100.0))
+        ex = math.floor(105+(velturn*100.0))
+        ey = math.floor(400+(velfwd*100.0))
         cv2.arrowedLine(redmask,(105,400),(ex,ey),(0, 255, 0), 3, cv2.LINE_AA, 0, 0.1)
         return redmask
 
+ 

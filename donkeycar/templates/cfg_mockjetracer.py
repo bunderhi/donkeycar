@@ -72,6 +72,9 @@ ROI_CROP_BOTTOM = 0                 #the number of rows of pixels to ignore on t
 ALPHA = 0.5  # Alpha blend value used for fpv image (camera image + mask)
 TIMER = False  # Display FPS timing on fpv view
 
+TARGET_SPEED = 150.0  # Target normal speed 
+PATH_INCREMENT = 40  # The path planning will create path points every 40 
+
 #Odometry
 HAVE_ODOM = False                   # Do you have an odometer? Uses pigpio 
 
