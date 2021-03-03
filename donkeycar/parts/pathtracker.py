@@ -99,7 +99,7 @@ class StanleyController(object):
         return target_idx, error_front_axle
 
     def run(self,velturn,velfwd,rax,ray,ryaw):
-        target_idx, _ = self.calc_target_index(self, rax, ray)
+        target_idx, _ = self.calc_target_index(rax, ray)
         self.v = np.hypot(velfwd, velturn)
         self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
         accel = self.pid_control(self.target_speed, self.v)
