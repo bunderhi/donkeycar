@@ -382,8 +382,9 @@ class PlanMap(object):
         #cv2.polylines(redmask,[waypntxy],False,(255,0,0),3)
         cv2.polylines(redmask,[raxy],False,(255,255,0),3)
 
-        deltad = "{:.1f}".format(np.degrees(delta))
-        lines = deltad + '\n' + '\n' + accel
+        deltatxt = "{:.1f}".format(np.degrees(delta))
+        acceltxt = "{:.1f}".format(accel)
+        lines = deltatxt + '\n' + '\n' + acceltxt
         self.draw_text(redmask,text=lines,uv_top_left=(120,240))
         ex = math.floor(105+(velturn*100.0))
         ey = math.floor(400+(velfwd*100.0))
