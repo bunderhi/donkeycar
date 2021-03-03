@@ -392,7 +392,7 @@ class PlanMap(object):
         ex = math.floor(105+(velturn*100.0))
         ey = math.floor(400+(velfwd*100.0))
         cv2.arrowedLine(redmask,(105,400),(ex,ey),(0, 255, 0), 2, cv2.LINE_AA, 0, 0.1)
-        print(dx,dy,ex,ey)
+        print(delta, accel, dx, dy, velturn, velfwd, ex, ey)
         return redmask
 
  
