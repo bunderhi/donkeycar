@@ -135,8 +135,8 @@ def drive(cfg,verbose=True):
         )
 
     #add tub to save data
-    inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','plan/delta','plan/accel']
-    types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+    inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/accel']
+    types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
 
 
     th = TubHandler(path=cfg.DATA_PATH)
