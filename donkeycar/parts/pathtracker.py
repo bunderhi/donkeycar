@@ -18,7 +18,7 @@ class StanleyController(object):
         self.x = 105.
         self.y = 400.
         self.v = 0. # current Velocity
-        self.yaw # Current yaw (birdseye frame)
+        self.yaw = 0. # Current yaw (birdseye frame)
         self.target_speed = cfg.TARGET_SPEED # target velocity in cm/s 
 
 
