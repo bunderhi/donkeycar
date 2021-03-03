@@ -386,13 +386,12 @@ class PlanMap(object):
         acceltxt = "{:.1f}".format(accel)
         lines = deltatxt + '\n' + '\n' + acceltxt
         self.draw_text(redmask,text=lines,uv_top_left=(120,240))
-        dy = math.floor(400. - math.cos(delta) * accel)
-        dx = math.floor(105. + math.sin(delta) * accel)
+        dy = math.floor(400. - (math.sin(delta) * accel))
+        dx = math.floor(105. + (math.cos(delta) * accel))
         cv2.arrowedLine(redmask,(105,400),(dx,dy),(0, 255, 255), 2, cv2.LINE_AA, 0, 0.1)
         ex = math.floor(105+(velturn*100.0))
         ey = math.floor(400+(velfwd*100.0))
         cv2.arrowedLine(redmask,(105,400),(ex,ey),(0, 255, 0), 2, cv2.LINE_AA, 0, 0.1)
-        print(delta, accel, dx, dy, velturn, velfwd, ex, ey)
         return redmask
 
  
