@@ -17,6 +17,7 @@ import logging
 
 from docopt import docopt
 import numpy as np
+import math
 
 import donkeycar as dk
 from donkeycar.parts.datastore import TubHandler,TubReader
@@ -77,12 +78,15 @@ def drive(cfg,verbose=True):
                 posy = record[1]   # real posy = camera posx
                 posz = -record[2]   # real posz = camera -posy
                 posx = -record[3]   # real posx = camera -posz
-                turnvel = record[4]   # left/right vel  = camera velx
+                xvel = record[4]   # left/right vel  
                 #vely = record[5]   
-                fwdvel = record[6]   # forward vel  = camera -velz
+                zvel = record[6]   # forward vel  
                 roll = record[7]
                 pitch = record[8]
-                yaw = record[9]
+                yaw =  math.radians(record[9])   # yaw was in degrees originally
+                fwdvel = math.cos(yaw)*zvel - math.sin(yaw)*xvel   # rotate velocity by yaw angle to the camera frame
+                turnvel = math.sin(yaw)*zvel + math.cos(yaw)*xvel
+
                 return img_array,posx,posy,posz,turnvel,fwdvel,roll,pitch,yaw 
             return None,None,None,None,None,None,None,None,None
     
