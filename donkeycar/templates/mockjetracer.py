@@ -48,14 +48,14 @@ def drive(cfg,verbose=True):
 
     class HardcodeUserMode:
         def run(self):
-            assert cfg.USERMODE is not None and cfg.AIPILOT is not None and cfg.RECORD is not None,'Missing config settings (USERMODE,AIPILOT,RECORD'
-            return cfg.USERMODE,cfg.RECORD,cfg.AIPILOT
-    V.add(HardcodeUserMode(), outputs=['user/mode','recording','AI/pilot'])
+            assert cfg.USERMODE is not None and cfg.AIPILOT is not None and cfg.RECORD is not None and cfg.FPV_VIEW is not None,'Missing config settings (USERMODE,AIPILOT,RECORD'
+            return cfg.USERMODE,cfg.RECORD,cfg.AIPILOT,cfg.FPV_VIEW
+    V.add(HardcodeUserMode(), outputs=['user/mode','recording','AI/pilot','AI/fpv'])
     
 
     # FPS Camera image viewer
-    V.add(WebFpv(port=8890), inputs=['cam/fpv'], threaded=True)
-    V.add(WebFpv(port=8891), inputs=['plan/map'], threaded=True)
+    V.add(WebFpv(port=8890), inputs=['cam/fpv'], threaded=True,run_condition='AI/fpv')
+    V.add(WebFpv(port=8891), inputs=['plan/map'], threaded=True,run_condition='AI/fpv')
 
     # Mock camera from existing tub 
     inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9']
@@ -75,17 +75,17 @@ def drive(cfg,verbose=True):
             print (len(record))
             if record is not None:
                 img_array = record[0]
-                posy = record[1]   # real posy = camera posx
+                posx = record[1]   # real posx = camera posx
                 posz = -record[2]   # real posz = camera -posy
-                posx = -record[3]   # real posx = camera -posz
+                posy = -record[3]   # real posy = camera -posz
                 xvel = record[4]   # left/right vel  
                 #vely = record[5]   
-                zvel = record[6]   # forward vel  
+                yvel = record[6]   # forward vel  
                 roll = record[7]
                 pitch = record[8]
                 yaw =  math.radians(record[9])   # yaw was in degrees originally
-                fwdvel = math.cos(yaw)*zvel - math.sin(yaw)*xvel   # rotate velocity by yaw angle to the camera frame
-                turnvel = math.sin(yaw)*zvel + math.cos(yaw)*xvel
+                fwdvel = math.cos(yaw)*yvel - math.sin(yaw)*xvel   # rotate velocity by yaw angle to the camera frame
+                turnvel = math.sin(yaw)*yvel + math.cos(yaw)*xvel
 
                 return img_array,posx,posy,posz,turnvel,fwdvel,roll,pitch,yaw 
             return None,None,None,None,None,None,None,None,None
@@ -110,32 +110,32 @@ def drive(cfg,verbose=True):
     print('finished loading in %s sec.' % (str(time.time() - start)))
 
     V.add(trt, inputs=['cam/inf_input'],
-        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot'
+        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=True
         )
 
     V.add(ImgAlphaBlend(cfg),
         inputs=['inf/mask','cam/raw','cam/framecount','inf/framecount'],
-        outputs=['cam/fpv'], run_condition='AI/pilot'
+        outputs=['cam/fpv'], run_condition='AI/fpv'
         )
 
     V.add(BirdseyeView(cfg),
-        inputs=['inf/mask'],
+        inputs=['inf/mask','inf/framecount'],
         outputs=['plan/freespace'], run_condition='AI/pilot'
         )
     
     V.add(PlanPath(cfg),
-        inputs=['plan/freespace'],
+        inputs=['plan/freespace','inf/framecount'],
         outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy','plan/pathyaw'], run_condition='AI/pilot'
         )
-    
+     
     V.add(StanleyController(cfg),
-        inputs=['vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw'],
-        outputs=['plan/delta','plan/accel'], run_condition='AI/pilot'
+        inputs=['inf/framecount','pos/x','pos/y','pos/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw'],
+        outputs=['cam/x','cam/y','plan/delta','plan/accel'], run_condition='AI/pilot'
         )
 
     V.add(PlanMap(cfg),
-        inputs=['plan/freespace','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/accel'],
-        outputs=['plan/map'], run_condition='AI/pilot'
+        inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/accel'],
+        outputs=['plan/map'], run_condition='AI/fpv'
         )
 
     #add tub to save data

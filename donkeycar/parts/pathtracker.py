@@ -98,10 +98,19 @@ class StanleyController(object):
 
         return target_idx, error_front_axle
 
-    def run(self,velturn,velfwd,rax,ray,ryaw):
+    def run(self,img_count,x,y,yaw,velturn,velfwd,rax,ray,ryaw):
+        if img_count > self.img_count:
+            self.x = 105.
+            self.y = 400.
+            self.img_count = img_count  
+        else:
+            dx = x - self.x
+            dy = y - self.y
+            self.y = self.y + (np.cos(yaw)*dy - np.sin(yaw)*dx)   # rotate velocity by yaw angle to the camera frame
+            self.x = self.x + (np.sin(yaw)*dy + np.cos(yaw)*dx)
         target_idx, _ = self.calc_target_index(rax, ray)
         self.v = np.hypot(velfwd, velturn)
         self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
         accel = self.pid_control(self.target_speed, self.v)
         delta, target_idx = self.stanley_control(rax, ray, ryaw, target_idx)
-        return delta,accel
+        return self.x,self.y,delta,accel

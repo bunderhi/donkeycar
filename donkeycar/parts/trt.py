@@ -5,6 +5,7 @@ import pycuda.autoinit
 import numpy as np
 import tensorrt 
 from pathlib import Path
+import time
 
 
 EXPLICIT_BATCH = 1 << (int)(tensorrt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
@@ -40,6 +41,9 @@ class TensorRTSegment(object):
         self.bindings = None
         self.stream = None
         self.infcount = 0
+        self.inf_inputs = None
+        self.mask = None
+        self.running = True
     
     def compile(self):
         print('Nothing to compile')
@@ -62,6 +66,31 @@ class TensorRTSegment(object):
         mask = (trt_outputs[0] > 0.4).astype(np.uint8).reshape(160,320)
         self.infcount += 1
         return mask,self.infcount
+
+    def doInf(self, inf_inputs):
+        # Do inference
+        #print('Running inference on image')
+        trt_outputs = []
+        # Set host input to the image. The do_inference_v2 function will copy the input to the GPU before executing.
+        self.inputs[0].host = inf_inputs
+        with self.engine.create_execution_context() as context:
+            trt_outputs = TensorRTSegment.do_inference_v2(context=context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream)
+        self.mask = (trt_outputs[0] > 0.4).astype(np.uint8).reshape(160,320)
+        self.infcount += 1
+        return 
+    
+    
+    def update(self):
+        while self.running:
+            self.doInf(self.inf_inputs)
+    
+    def run_threaded(self, inf_inputs):
+        self.inf_inputs = inf_inputs
+        return self.mask,self.infcount
+
+    def shutdown(self):
+        self.running = False
+        time.sleep(0.1)
 
     # Allocates all buffers required for an engine, i.e. host/device inputs/outputs.
     @classmethod

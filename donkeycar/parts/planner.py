@@ -37,6 +37,8 @@ class BirdseyeView(object):
         srcpts = np.float32([[371,455],[337,550],[472,472],[538,548]])  # mat + banister pts
         dstpts = np.float32([[27,65],[73,314],[133,194],[133,314]])
         self.M = cv2.getPerspectiveTransform(srcpts,dstpts)
+        self.birdseye_mask = None
+        self.img_count = 0
 
     def undistort(self,img):    
         """
@@ -77,13 +79,14 @@ class BirdseyeView(object):
         return np.array(intrinsics["coeffs"][:4])
 
 
-    def run(self,img):
-
-        original = self.reverse(img)
-        undistorted_img = self.undistort(original)
-        redm = cv2.cvtColor(undistorted_img,cv2.COLOR_RGB2GRAY).reshape(800,848)
-        birdseye_mask = self.warpperspective(redm)
-        return birdseye_mask
+    def run(self,img,img_count):
+        if img_count > self.img_count:  # Only perform transforms if its a fresh mask
+            original = self.reverse(img)
+            undistorted_img = self.undistort(original)
+            redm = cv2.cvtColor(undistorted_img,cv2.COLOR_RGB2GRAY).reshape(800,848)
+            self.birdseye_mask = self.warpperspective(redm)
+        self.img_count = img_count
+        return self.birdseye_mask
 
 class Spline:
     """
@@ -258,6 +261,7 @@ class PlanPath(object):
         self.ray = []
         self.ryaw = []
         self.ds = cfg.PATH_INCREMENT  # 400/40 = 10 path points 
+        self.img_count = 0
 
     def calc_spline_course(self,x, y):
         sp = Spline2D(x, y)
@@ -304,11 +308,13 @@ class PlanPath(object):
         waypntx = [105,waypntx1,waypntx2,goalx]
         return waypntx,waypnty
 
-    def run(self,mask):
-        # waypoints
-        self.waypntx,self.waypnty = self.setgoal(mask)
-        # path
-        self.rax, self.ray, self.ryaw = self.calc_spline_course(self.waypntx,self.waypnty)  
+    def run(self,mask,img_count):
+        if img_count > self.img_count:
+            # waypoints
+            self.waypntx,self.waypnty = self.setgoal(mask)
+            # path
+            self.rax, self.ray, self.ryaw = self.calc_spline_course(self.waypntx,self.waypnty) 
+        self.img_count = img_count
         return self.waypntx,self.waypnty,self.rax,self.ray,self.ryaw
 
 
@@ -320,6 +326,8 @@ class PlanMap(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.fill = np.zeros((2,400,200),dtype=np.uint8)
+        self.x = 105.
+        self.y = 400.
     
     def draw_text(self,
         img,
@@ -372,7 +380,9 @@ class PlanMap(object):
             uv_top_left += [0, h * line_spacing]
 
     
-    def run(self,mask,velturn,velfwd,rx,ry,delta,accel):
+    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,accel):
+        cax = math.floor(cx)
+        cay = math.floor(cy)
         rax = np.empty_like(rx, dtype=np.int64)
         np.floor(rx, rax,casting="unsafe")
         ray = np.empty_like(ry, dtype=np.int64)
@@ -386,12 +396,12 @@ class PlanMap(object):
         acceltxt = "{:.1f}".format(accel)
         lines = deltatxt + '\n' + '\n' + acceltxt
         self.draw_text(redmask,text=lines,uv_top_left=(120,240))
-        dy = math.floor(400. - (math.sin(delta) * accel))
-        dx = math.floor(105. - (math.cos(delta) * accel))
-        cv2.arrowedLine(redmask,(105,400),(dx,dy),(0, 255, 255), 2, cv2.LINE_AA, 0, 0.1)
-        ex = math.floor(105+(velturn*100.0))
-        ey = math.floor(400+(velfwd*100.0))
-        cv2.arrowedLine(redmask,(105,400),(ex,ey),(0, 255, 0), 2, cv2.LINE_AA, 0, 0.1)
+        dy = math.floor(cay - (math.sin(delta) * accel))
+        dx = math.floor(cax - (math.cos(delta) * accel))
+        cv2.arrowedLine(redmask,(cax,cay),(dx,dy),(0, 255, 255), 2, cv2.LINE_AA, 0, 0.1)
+        ex = math.floor(cax + (velturn*100.0))
+        ey = math.floor(cay + (velfwd*100.0))
+        cv2.arrowedLine(redmask,(cax,cay),(ex,ey),(0, 255, 0), 2, cv2.LINE_AA, 0, 0.1)
         return redmask
 
  
