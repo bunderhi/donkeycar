@@ -42,6 +42,8 @@ class TensorRTSegment(object):
         self.stream = None
         self.infcount = 0
         self.inf_inputs = None
+        self.framecount = 0
+        self.newimage = False
         self.mask = None
         self.running = True
     
@@ -81,14 +83,18 @@ class TensorRTSegment(object):
         return 
     
     def update(self):
-        print("update loop")
         while self.running:
-            if self.inf_inputs is not None:
+            if self.inf_inputs is not None and self.newimage:
+                print("update loop")
+                self.newimage = False
                 self.doInf(self.inf_inputs)
     
-    def run_threaded(self, inf_inputs):
+    def run_threaded(self, inf_inputs, framecount):
         print("run loop")
-        self.inf_inputs = inf_inputs
+        if framecount > self.framecount:
+            self.inf_inputs = inf_inputs
+            self.framecount = framecount
+            self.newimage = True
         return self.mask,self.infcount
 
     def shutdown(self):
