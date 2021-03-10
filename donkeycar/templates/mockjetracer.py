@@ -122,7 +122,7 @@ def drive(cfg,verbose=True):
             return True,cfg.RECORD,cfg.FPV_VIEW
 
     if cfg.AIPILOT:
-        V.add(AIWarmup(), inputs=['inf/mask'], outputs=['AI/processing','recording','AI/fpv2'])
+        V.add(AIWarmup(cfg), inputs=['inf/mask'], outputs=['AI/processing','recording','AI/fpv2'])
 
     V.add(ImgAlphaBlend(cfg),
         inputs=['inf/mask','cam/raw','cam/framecount','inf/framecount'],
