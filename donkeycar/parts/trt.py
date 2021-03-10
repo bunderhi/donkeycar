@@ -77,10 +77,12 @@ class TensorRTSegment(object):
             trt_outputs = TensorRTSegment.do_inference_v2(context=context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream)
         self.mask = (trt_outputs[0] > 0.4).astype(np.uint8).reshape(160,320)
         self.infcount += 1
+        print("inference count",self.infcount)
         return 
     
     
     def update(self):
+        print("update loop")
         while self.running:
             self.doInf(self.inf_inputs)
     
