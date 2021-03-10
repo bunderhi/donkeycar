@@ -105,24 +105,28 @@ def drive(cfg,verbose=True):
     trt.load(onnx_file_path=cfg.MODEL_PATH,engine_file_path=cfg.ENGINE_PATH)
     print('finished loading in %s sec.' % (str(time.time() - start)))
 
+    class AIWarmup:
+            '''
+            return false until the first inference is complete
+            '''
+            def __init__(self, cfg):
+                self.cfg = cfg
+
+            def run(self,inf_input,mask):
+                
+                if inf_input is None:
+                    return False,False,False,False
+                else:
+                    if mask is None:
+                        return True,False,False,False
+                    return True,True,cfg.RECORD,cfg.FPV_VIEW
+
+    if cfg.AIPILOT:
+        V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask'], outputs=['AI/pilot','AI/processing','recording','AI/fpv2'])
+
     V.add(trt, inputs=['cam/inf_input'],
         outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=True
         )
-
-    class AIWarmup:
-        '''
-        return false until the first inference is complete
-        '''
-        def __init__(self, cfg):
-            self.cfg = cfg
-
-        def run(self, mask):
-            if mask is None:
-                return False,False,False
-            return True,cfg.RECORD,cfg.FPV_VIEW
-
-    if cfg.AIPILOT:
-        V.add(AIWarmup(cfg), inputs=['inf/mask'], outputs=['AI/processing','recording','AI/fpv2'])
 
     V.add(ImgAlphaBlend(cfg),
         inputs=['inf/mask','cam/raw','cam/framecount','inf/framecount'],
