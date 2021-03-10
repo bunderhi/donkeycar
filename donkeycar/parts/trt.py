@@ -47,6 +47,12 @@ class TensorRTSegment(object):
         self.mask = None
         self.running = True
         self.run_threaded = cfg.RUN_THREADED
+
+        start = time.time()
+        print('loading model')
+        self.cfx = cuda.Device(0).make_context()
+        self.load(onnx_file_path=self.cfg.MODEL_PATH,engine_file_path=self.cfg.ENGINE_PATH)
+        print('finished loading in %s sec.' % (str(time.time() - start)))
     
     def compile(self):
         print('Nothing to compile')
@@ -73,22 +79,19 @@ class TensorRTSegment(object):
     def doInf(self, inf_inputs):
         # Do inference
         #print('Running inference on image')
+        self.cfx.push()
         trt_outputs = []
         # Set host input to the image. The do_inference_v2 function will copy the input to the GPU before executing.
         self.inputs[0].host = inf_inputs
         with self.engine.create_execution_context() as context:
             trt_outputs = TensorRTSegment.do_inference_v2(context=context, bindings=self.bindings, inputs=self.inputs, outputs=self.outputs, stream=self.stream)
         self.mask = (trt_outputs[0] > 0.4).astype(np.uint8).reshape(160,320)
+        self.cfx.pop()
         self.infcount += 1
         print("inference count",self.infcount)
         return 
     
-    def update(self):
-        start = time.time()
-        print('loading model')
-        self.load(onnx_file_path=self.cfg.MODEL_PATH,engine_file_path=self.cfg.ENGINE_PATH)
-        print('finished loading in %s sec.' % (str(time.time() - start)))
-        
+    def update(self):   
         while self.running and self.run_threaded:
             if self.inf_inputs is not None and self.newimage:
                 print("update loop",np.shape(self.inf_inputs))
@@ -106,6 +109,7 @@ class TensorRTSegment(object):
 
     def shutdown(self):
         self.running = False
+        self.cfx.pop()
         time.sleep(0.1)
 
     # Allocates all buffers required for an engine, i.e. host/device inputs/outputs.
