@@ -46,6 +46,7 @@ class TensorRTSegment(object):
         self.newimage = False
         self.mask = None
         self.running = True
+        self.run_threaded = cfg.RUN_THREADED
     
     def compile(self):
         print('Nothing to compile')
@@ -83,7 +84,12 @@ class TensorRTSegment(object):
         return 
     
     def update(self):
-        while self.running:
+        start = time.time()
+        print('loading model')
+        self.load(onnx_file_path=self.cfg.MODEL_PATH,engine_file_path=self.cfg.ENGINE_PATH)
+        print('finished loading in %s sec.' % (str(time.time() - start)))
+        
+        while self.running and self.run_threaded:
             if self.inf_inputs is not None and self.newimage:
                 print("update loop",np.shape(self.inf_inputs))
                 self.newimage = False

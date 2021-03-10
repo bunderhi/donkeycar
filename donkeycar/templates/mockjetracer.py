@@ -48,10 +48,9 @@ def drive(cfg,verbose=True):
 
     class HardcodeUserMode:
         def run(self):
-            assert cfg.USERMODE is not None and cfg.AIPILOT is not None and cfg.RECORD is not None and cfg.FPV_VIEW is not None,'Missing config settings (USERMODE,AIPILOT,RECORD'
-            return cfg.USERMODE,cfg.RECORD,cfg.AIPILOT,cfg.FPV_VIEW,cfg.FPV_VIEW
-    V.add(HardcodeUserMode(), outputs=['user/mode','recording','AI/pilot','AI/fpv','AI/fpv2'])
-    
+            assert cfg.USERMODE is not None and cfg.FPV_VIEW is not None,'Missing config settings (USERMODE,AIPILOT,RECORD'
+            return cfg.USERMODE,cfg.FPV_VIEW
+    V.add(HardcodeUserMode(), outputs=['user/mode','AI/fpv'])
 
     # FPS Camera image viewer
     V.add(WebFpv(port=8890), inputs=['cam/fpv'], threaded=True,run_condition='AI/fpv')
@@ -97,21 +96,13 @@ def drive(cfg,verbose=True):
         outputs=['cam/raw','cam/inf_input','cam/framecount']
         )
 
-    # Create and load Freespace segmentation model
-    trt = TensorRTSegment(cfg=cfg)
-
-    start = time.time()
-    print('loading model')
-    trt.load(onnx_file_path=cfg.MODEL_PATH,engine_file_path=cfg.ENGINE_PATH)
-    print('finished loading in %s sec.' % (str(time.time() - start)))
-
     class AIWarmup:
             '''
             return false until the first inference is complete
             '''
             def __init__(self, cfg):
                 self.cfg = cfg
-
+ 
             def run(self,inf_input,mask):
                 
                 if inf_input is None:
@@ -123,9 +114,12 @@ def drive(cfg,verbose=True):
 
     if cfg.AIPILOT:
         V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask'], outputs=['AI/pilot','AI/processing','recording','AI/fpv2'])
-
+    
+    # Create Freespace segmentation model
+    trt = TensorRTSegment(cfg=cfg)
+    
     V.add(trt, inputs=['cam/inf_input','cam/framecount'],
-        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=True
+        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=cfg.RUN_THREADED
         )
 
     V.add(ImgAlphaBlend(cfg),

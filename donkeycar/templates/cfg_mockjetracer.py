@@ -29,6 +29,9 @@ ENGINE_PATH = os.path.join(CAR_PATH, 'engine/model10.trt')
 #PATH_MASK = '/media/C63B-4FCD/data/**/*.jpg'
 READ_PATH = '/media/C63B-4FCD/data/tub'
 
+# TensorRT
+RUN_THREADED = True  # Run the tensorRT engine threaded
+
 #VEHICLE
 DRIVE_LOOP_HZ = 20      # the vehicle loop will pause if faster than this speed.
 MAX_LOOPS = None        # the vehicle loop can abort after this many iterations, when given a positive integer.
