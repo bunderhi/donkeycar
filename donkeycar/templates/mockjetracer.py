@@ -49,8 +49,8 @@ def drive(cfg,verbose=True):
     class HardcodeUserMode:
         def run(self):
             assert cfg.USERMODE is not None and cfg.AIPILOT is not None and cfg.RECORD is not None and cfg.FPV_VIEW is not None,'Missing config settings (USERMODE,AIPILOT,RECORD'
-            return cfg.USERMODE,cfg.RECORD,cfg.AIPILOT,cfg.FPV_VIEW
-    V.add(HardcodeUserMode(), outputs=['user/mode','recording','AI/pilot','AI/fpv'])
+            return cfg.USERMODE,cfg.RECORD,cfg.AIPILOT,cfg.FPV_VIEW,cfg.FPV_VIEW
+    V.add(HardcodeUserMode(), outputs=['user/mode','recording','AI/pilot','AI/fpv','AI/fpv2'])
     
 
     # FPS Camera image viewer
@@ -92,10 +92,6 @@ def drive(cfg,verbose=True):
     
     V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/turn','vel/fwd', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
     
-    # Mock camera feed
-    #cam = ImageListCamera(path_mask=cfg.PATH_MASK)
-    #V.add(cam, outputs=['cam/image_array'], threaded=True)
-    
     V.add(ImgPreProcess(cfg),
         inputs=['cam/image_array'],
         outputs=['cam/raw','cam/inf_input','cam/framecount']
@@ -113,29 +109,44 @@ def drive(cfg,verbose=True):
         outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=True
         )
 
+    class AIWarmup:
+        '''
+        return false until the first inference is complete
+        '''
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        def run(self, mask):
+            if mask is None:
+                return False,False,False
+            return True,cfg.RECORD,cfg.FPV_VIEW
+
+    if cfg.AIPILOT:
+        V.add(AIWarmup(), inputs=['inf/mask'], outputs=['AI/processing','recording','AI/fpv2'])
+
     V.add(ImgAlphaBlend(cfg),
         inputs=['inf/mask','cam/raw','cam/framecount','inf/framecount'],
-        outputs=['cam/fpv'], run_condition='AI/fpv'
+        outputs=['cam/fpv'], run_condition='AI/fpv2'
         )
 
     V.add(BirdseyeView(cfg),
         inputs=['inf/mask','inf/framecount'],
-        outputs=['plan/freespace'], run_condition='AI/pilot'
+        outputs=['plan/freespace'], run_condition='AI/processing'
         )
     
     V.add(PlanPath(cfg),
         inputs=['plan/freespace','inf/framecount'],
-        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy','plan/pathyaw'], run_condition='AI/pilot'
+        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy','plan/pathyaw'], run_condition='AI/processing'
         )
      
     V.add(StanleyController(cfg),
         inputs=['inf/framecount','pos/x','pos/y','pos/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw'],
-        outputs=['cam/x','cam/y','plan/delta','plan/accel'], run_condition='AI/pilot'
+        outputs=['cam/x','cam/y','plan/delta','plan/accel'], run_condition='AI/processing'
         )
 
     V.add(PlanMap(cfg),
         inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/accel'],
-        outputs=['plan/map'], run_condition='AI/fpv'
+        outputs=['plan/map'], run_condition='AI/fpv2'
         )
 
     #add tub to save data
