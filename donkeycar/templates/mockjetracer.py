@@ -72,7 +72,7 @@ def drive(cfg,verbose=True):
 
     class ReadStream:
         def run(self, record):
-            print (len(record))
+            print ("input record",len(record))
             if record is not None:
                 img_array = record[0]
                 posx = record[1]   # real posx = camera posx
