@@ -124,7 +124,7 @@ def drive(cfg,verbose=True):
     if cfg.AIPILOT:
         V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask'], outputs=['AI/pilot','AI/processing','recording','AI/fpv2'])
 
-    V.add(trt, inputs=['cam/inf_input'],
+    V.add(trt, inputs=['cam/inf_input','cam/framecount'],
         outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=True
         )
 
