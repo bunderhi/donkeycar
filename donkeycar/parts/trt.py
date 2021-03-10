@@ -80,13 +80,14 @@ class TensorRTSegment(object):
         print("inference count",self.infcount)
         return 
     
-    
     def update(self):
         print("update loop")
         while self.running:
-            self.doInf(self.inf_inputs)
+            if self.inf_inputs is not None:
+                self.doInf(self.inf_inputs)
     
     def run_threaded(self, inf_inputs):
+        print("run loop")
         self.inf_inputs = inf_inputs
         return self.mask,self.infcount
 
