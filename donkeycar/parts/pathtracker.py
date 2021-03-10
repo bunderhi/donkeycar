@@ -20,7 +20,7 @@ class StanleyController(object):
         self.v = 0. # current Velocity
         self.yaw = 0. # Current yaw (birdseye frame)
         self.target_speed = cfg.TARGET_SPEED # target velocity in cm/s 
-        self.img_count
+        self.img_count = 0
 
 
     def pid_control(self,target,current):
