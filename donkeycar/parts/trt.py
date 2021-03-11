@@ -91,13 +91,13 @@ class TensorRTSegment(object):
         print("inference count",self.infcount)
         return 
     
-    def update(self):   
+    def update(self): 
+        print("update start")  
         while self.running and self.run_threaded:
             if self.inf_inputs is not None and self.newimage:
                 print("update loop",np.shape(self.inf_inputs))
                 self.newimage = False
                 self.doInf(self.inf_inputs)
-                time.sleep(0.01)
     
     def run_threaded(self, inf_inputs, framecount):
         print("run loop")

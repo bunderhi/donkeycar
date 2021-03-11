@@ -116,11 +116,9 @@ def drive(cfg,verbose=True):
     if cfg.AIPILOT:
         V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask'], outputs=['AI/pilot','AI/processing','recording','AI/fpv2'])
     
-    # Create Freespace segmentation model
-    trt = TensorRTSegment(cfg=cfg)
-
-    V.add(trt, inputs=['cam/inf_input','cam/framecount'],
-        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=cfg.RUN_THREADED
+    V.add(TensorRTSegment(cfg), 
+        inputs=['cam/inf_input','cam/framecount'],
+        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=True
         )
 
     V.add(ImgAlphaBlend(cfg),
