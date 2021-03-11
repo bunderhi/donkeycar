@@ -110,14 +110,15 @@ def drive(cfg,verbose=True):
                 else:
                     if mask is None:
                         return True,False,False,False
-                    return True,True,cfg.RECORD,cfg.FPV_VIEW
+                    print("Ready to proceed")
+                    return True,True,self.cfg.RECORD,self.cfg.FPV_VIEW
 
     if cfg.AIPILOT:
         V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask'], outputs=['AI/pilot','AI/processing','recording','AI/fpv2'])
     
     # Create Freespace segmentation model
     trt = TensorRTSegment(cfg=cfg)
-    
+
     V.add(trt, inputs=['cam/inf_input','cam/framecount'],
         outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=cfg.RUN_THREADED
         )
