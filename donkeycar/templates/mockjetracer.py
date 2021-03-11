@@ -118,7 +118,7 @@ def drive(cfg,verbose=True):
     
     V.add(TensorRTSegment(cfg), 
         inputs=['cam/inf_input','cam/framecount'],
-        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=True
+        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=cfg.RUN_THREADED
         )
 
     V.add(ImgAlphaBlend(cfg),
