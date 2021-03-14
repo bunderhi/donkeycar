@@ -57,12 +57,12 @@ def drive(cfg,verbose=True):
     V.add(WebFpv(port=8891), inputs=['plan/map'], threaded=True,run_condition='AI/fpv')
 
     # Mock camera from existing tub 
-    inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9']
+    inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9', 'arg10']
     
 
     class InitializeReader:
         def run(self):
-            return 'cam/image1','pos/x','pos/y','pos/z','vel/x','vel/y','vel/z','rpy/roll','rpy/pitch','rpy/yaw'
+            return 'cam/image1','pos/x','pos/y','pos/z','vel/x','vel/y','vel/z','rpy/roll','rpy/pitch','rpy/yaw','milliseconds'
     V.add(InitializeReader(), outputs=inputs)
 
 
@@ -85,11 +85,12 @@ def drive(cfg,verbose=True):
                 yaw =  math.radians(record[9])   # yaw was in degrees originally
                 fwdvel = math.cos(yaw)*yvel - math.sin(yaw)*xvel   # rotate velocity by yaw angle to the camera frame
                 turnvel = math.sin(yaw)*yvel + math.cos(yaw)*xvel
+                timestamp = record[10]
 
-                return img_array,posx,posy,posz,turnvel,fwdvel,roll,pitch,yaw 
-            return None,None,None,None,None,None,None,None,None
+                return img_array,posx,posy,posz,turnvel,fwdvel,roll,pitch,yaw,timestamp
+            return None,None,None,None,None,None,None,None,None,None
     
-    V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/turn','vel/fwd', 'rpy/roll', 'rpy/pitch', 'rpy/yaw'])
+    V.add(ReadStream(),inputs=['input/record'],outputs=['cam/image_array', 'pos/x', 'pos/y', 'pos/z', 'vel/turn','vel/fwd', 'rpy/roll', 'rpy/pitch', 'rpy/yaw','cam/timestamp'])
     
     V.add(ImgPreProcess(cfg),
         inputs=['cam/image_array'],
@@ -133,11 +134,11 @@ def drive(cfg,verbose=True):
     
     V.add(PlanPath(cfg),
         inputs=['plan/freespace','inf/framecount'],
-        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy','plan/pathyaw'], run_condition='AI/processing'
+        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile'], run_condition='AI/processing'
         )
      
     V.add(StanleyController(cfg),
-        inputs=['inf/framecount','pos/x','pos/y','pos/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw'],
+        inputs=['inf/framecount','pos/x','pos/y','pos/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','cam/timestamp'],
         outputs=['cam/x','cam/y','plan/delta','plan/accel'], run_condition='AI/processing'
         )
 

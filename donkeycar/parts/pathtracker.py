@@ -13,24 +13,28 @@ class StanleyController(object):
 
     def __init__(self, cfg):
         self.k = 0.5  # control gain
-        self.Kp = 0.9  # speed proportional gain
+        self.Kp = 0.5  # speed proportional gain
+        self.Kd = 0.2  # speed diferential gain
         self.L = 29  # [m] Wheel base of vehicle
         self.x = 105.
         self.y = 400.
         self.v = 0. # current Velocity
         self.yaw = 0. # Current yaw (birdseye frame)
-        self.target_speed = cfg.TARGET_SPEED # target velocity in cm/s 
         self.img_count = 0
+        self.timestamp = 0
 
 
-    def pid_control(self,target,current):
+    def pid_control(self,target,current,accel):
         """
         Proportional control for the speed.
         :param target: (float)
         :param current: (float)
-        :return: (float)
+        :param accel (float) dv / dt 
+        :return: target change in accel (float)
         """
-        return self.Kp * (target - current)
+        newaccel = self.Kp * (target - current) + self.Kd * accel
+        daccel = newaccel - accel 
+        return daccel 
 
 
     def stanley_control(self, cx, cy, cyaw, last_target_idx):
@@ -99,7 +103,7 @@ class StanleyController(object):
 
         return target_idx, error_front_axle
 
-    def run(self,img_count,x,y,yaw,velturn,velfwd,rax,ray,ryaw):
+    def run(self,img_count,x,y,yaw,velturn,velfwd,rax,ray,ryaw,speedprofile,timestamp):
         if img_count > self.img_count:
             self.x = 105.
             self.y = 400.
@@ -110,8 +114,13 @@ class StanleyController(object):
             self.y = self.y + (np.cos(yaw)*dy - np.sin(yaw)*dx)   # rotate velocity by yaw angle to the camera frame
             self.x = self.x + (np.sin(yaw)*dy + np.cos(yaw)*dx)
         target_idx, _ = self.calc_target_index(rax, ray)
-        self.v = np.hypot(velfwd, velturn)
+        target_speed = speedprofile[target_idx]
+        v = np.hypot(velfwd, velturn)
         self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
-        accel = self.pid_control(self.target_speed, self.v)
+        dt = (timestamp - self.timestamp) / 1000. # dt in seconds
+        accel = (v - self.v) / dt 
+        daccel = self.pid_control(target_speed, v, accel)
+        self.v = v # for next time around
+        self.timestamp = timestamp
         delta, target_idx = self.stanley_control(rax, ray, ryaw, target_idx)
-        return self.x,self.y,delta,accel
+        return self.x,self.y,delta,daccel

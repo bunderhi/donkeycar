@@ -276,6 +276,17 @@ class PlanPath(object):
             rk.append(sp.calc_curvature(i_s))
         return rx, ry, ryaw
 
+    def calc_speed_profile(self,ryaw):
+        target_speed = self.cfg.TARGET_SPEED
+        speed_profile = [target_speed] * len(ryaw)
+        # speed down as you near the planning horizon (goal)
+        for i in range(3):
+            speed_profile[-i] = target_speed / (5 - i)
+            if speed_profile[-i] <= 0.01:
+                speed_profile[-i] = 0.01
+        return speed_profile
+
+
     def setgoal(self,mask):
         """ 
             Find the coordinates for a path to the end goal using the freespace mask (birdseye view) 
@@ -313,9 +324,11 @@ class PlanPath(object):
             # waypoints
             self.waypntx,self.waypnty = self.setgoal(mask)
             # path
-            self.rax, self.ray, self.ryaw = self.calc_spline_course(self.waypntx,self.waypnty) 
+            self.rax, self.ray, self.ryaw = self.calc_spline_course(self.waypntx,self.waypnty)
+            # speed profile
+            self.speed_profile =  self.calc_speed_profile(self.ryaw)
         self.img_count = img_count
-        return self.waypntx,self.waypnty,self.rax,self.ray,self.ryaw
+        return self.waypntx,self.waypnty,self.rax,self.ray,self.ryaw,self.speed_profile
 
 
 class PlanMap(object):
