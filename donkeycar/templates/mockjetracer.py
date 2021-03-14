@@ -138,7 +138,7 @@ def drive(cfg,verbose=True):
         )
      
     V.add(StanleyController(cfg),
-        inputs=['inf/framecount','pos/x','pos/y','pos/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','cam/timestamp'],
+        inputs=['inf/framecount','pos/x','pos/y','rpy/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','cam/timestamp'],
         outputs=['cam/x','cam/y','plan/delta','plan/accel'], run_condition='AI/processing'
         )
 
