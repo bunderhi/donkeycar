@@ -115,10 +115,11 @@ class StanleyController(object):
         else:
             dx = (x - self.x) * 100
             dy = (y - self.y) * 100 
-            self.camy = self.camy + (np.cos(yaw)*dy - np.sin(yaw)*dx)   # rotate velocity by yaw angle to the camera frame
+            self.camy = self.camy - (np.cos(yaw)*dy - np.sin(yaw)*dx)   # rotate velocity by yaw angle to the camera frame
             self.camx = self.camx + (np.sin(yaw)*dy + np.cos(yaw)*dx)
             self.x = x
             self.y = y
+            print(f'reuse situation {self.camx},{self.camy}')
         target_idx, _ = self.calc_target_index(rax, ray)
         target_speed = speedprofile[target_idx]
         v = np.hypot(velfwd, velturn)
