@@ -415,6 +415,7 @@ class PlanMap(object):
         ex = math.floor(cax + (velturn*100.0))
         ey = math.floor(cay + (velfwd*100.0))
         cv2.arrowedLine(redmask,(cax,cay),(ex,ey),(0, 255, 0), 2, cv2.LINE_AA, 0, 0.1)
+        print(f'arrows ({cax},{cay}) ({ex},{ey}) and ({cax},{cay}) ({dx},{dy})')
         return redmask
 
  
