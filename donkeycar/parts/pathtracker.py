@@ -109,12 +109,12 @@ class StanleyController(object):
         if img_count > self.img_count:
             self.x = x
             self.y = y
-            self.camx = 105.
-            self.camy = 400.
+            self.camx = 105
+            self.camy = 400
             self.img_count = img_count  
         else:
-            dx = x - self.x
-            dy = y - self.y
+            dx = (x - self.x) * 100
+            dy = (y - self.y) * 100 
             self.camy = self.camy + (np.cos(yaw)*dy - np.sin(yaw)*dx)   # rotate velocity by yaw angle to the camera frame
             self.camx = self.camx + (np.sin(yaw)*dy + np.cos(yaw)*dx)
             self.x = x
@@ -129,4 +129,4 @@ class StanleyController(object):
         self.v = v # for next time around
         self.timestamp = timestamp
         delta, target_idx = self.stanley_control(rax, ray, ryaw, target_idx)
-        return self.x,self.y,delta,daccel
+        return self.camx,self.camy,delta,daccel
