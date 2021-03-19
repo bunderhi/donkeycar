@@ -16,8 +16,10 @@ class StanleyController(object):
         self.Kp = 0.5  # speed proportional gain
         self.Kd = 0.2  # speed diferential gain
         self.L = 29  # [m] Wheel base of vehicle
-        self.x = 105.
-        self.y = 400.
+        self.x = 0.
+        self.y = 0.
+        self.camx = 105.
+        self.camy = 400.
         self.v = 0. # current Velocity
         self.yaw = 0. # Current yaw (birdseye frame)
         self.img_count = 0
@@ -87,8 +89,8 @@ class StanleyController(object):
         """
         
         # Calc front axle position
-        fx = self.x + self.L * np.cos(self.yaw)
-        fy = self.y + self.L * np.sin(self.yaw)
+        fx = self.camx + self.L * np.cos(self.yaw)
+        fy = self.camy + self.L * np.sin(self.yaw)
 
         # Search nearest point index
         dx = [fx - icx for icx in cx]
@@ -105,14 +107,18 @@ class StanleyController(object):
 
     def run(self,img_count,x,y,yaw,velturn,velfwd,rax,ray,ryaw,speedprofile,timestamp):
         if img_count > self.img_count:
-            self.x = 105.
-            self.y = 400.
+            self.x = x
+            self.y = y
+            self.camx = 105.
+            self.camy = 400.
             self.img_count = img_count  
         else:
             dx = x - self.x
             dy = y - self.y
-            self.y = self.y + (np.cos(yaw)*dy - np.sin(yaw)*dx)   # rotate velocity by yaw angle to the camera frame
-            self.x = self.x + (np.sin(yaw)*dy + np.cos(yaw)*dx)
+            self.camy = self.camy + (np.cos(yaw)*dy - np.sin(yaw)*dx)   # rotate velocity by yaw angle to the camera frame
+            self.camx = self.camx + (np.sin(yaw)*dy + np.cos(yaw)*dx)
+            self.x = x
+            self.y = y
         target_idx, _ = self.calc_target_index(rax, ray)
         target_speed = speedprofile[target_idx]
         v = np.hypot(velfwd, velturn)
