@@ -16,10 +16,9 @@ print(cfg.CAMERA_RESOLUTION)
 import os
 
 #Operating modes
-USERMODE = 'user' # Operating mode user = manual operation
-AIPILOT = True # Start the AI Pilot 
+RUNMODE = 'Manual' # Operating mode Manual / AIPilot
 RECORD = False  # log to disk
-FPV_VIEW = True # show camera fpv and AI plan view 
+FPV = True # show camera fpv and AI plan view 
 
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))

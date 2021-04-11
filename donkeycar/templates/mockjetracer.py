@@ -22,7 +22,7 @@ import math
 import donkeycar as dk
 from donkeycar.parts.datastore import TubHandler,TubReader
 from donkeycar.parts.camera import ImageListCamera
-from donkeycar.parts.controller import WebFpv
+from donkeycar.parts.web_controller.web import WebFpv, WebConsole
 from donkeycar.parts.realsenseT265 import ImgPreProcess,ImgAlphaBlend
 from donkeycar.parts.planner import BirdseyeView, PlanPath, PlanMap
 from donkeycar.parts.pathtracker import StanleyController
@@ -45,21 +45,14 @@ def drive(cfg,verbose=True):
     
     #Initialize car
     V = dk.vehicle.Vehicle()
-
-    class HardcodeUserMode:
-        def run(self):
-            assert cfg.USERMODE is not None and cfg.FPV_VIEW is not None,'Missing config settings (USERMODE,AIPILOT,RECORD'
-            return cfg.USERMODE,cfg.FPV_VIEW
-    V.add(HardcodeUserMode(), outputs=['user/mode','AI/fpv'])
-
+    # Vehicle control web console
+    V.add(WebConsole(),inputs=[],outputs=[],threaded=True)
     # FPS Camera image viewer
     V.add(WebFpv(port=8890), inputs=['cam/fpv'], threaded=True,run_condition='AI/fpv')
     V.add(WebFpv(port=8891), inputs=['plan/map'], threaded=True,run_condition='AI/fpv')
 
     # Mock camera from existing tub 
     inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9', 'arg10']
-    
-
     class InitializeReader:
         def run(self):
             return 'cam/image1','pos/x','pos/y','pos/z','vel/x','vel/y','vel/z','rpy/roll','rpy/pitch','rpy/yaw','milliseconds'
