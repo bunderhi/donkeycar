@@ -183,6 +183,7 @@ class PWMSteering:
         self.right_pulse = right_pulse
         self.pulse = dk.utils.map_range(0, self.LEFT_ANGLE, self.RIGHT_ANGLE,
                                         self.left_pulse, self.right_pulse)
+        self.angle = 0.0
         self.running = True
         print('PWM Steering created')
 
@@ -190,14 +191,19 @@ class PWMSteering:
         while self.running:
             self.controller.set_pulse(self.pulse)
 
-    def run_threaded(self, angle):
+    def run_threaded(self, delta):
+        self.angle += delta
+        if self.angle > 1.0: 
+            self.angle = 1.0
+        if self.angle < -1.0: 
+            self.angle = -1.0    
         # map absolute angle to angle that vehicle can implement.
-        self.pulse = dk.utils.map_range(angle,
+        self.pulse = dk.utils.map_range(self.angle,
                                         self.LEFT_ANGLE, self.RIGHT_ANGLE,
                                         self.left_pulse, self.right_pulse)
 
-    def run(self, angle):
-        self.run_threaded(angle)
+    def run(self, delta):
+        self.run_threaded(delta)
         self.controller.set_pulse(self.pulse)
 
     def shutdown(self):
@@ -212,7 +218,7 @@ class PWMThrottle:
     Wrapper over a PWM motor controller to convert -1 to 1 throttle
     values to PWM pulses.
     """
-    MIN_THROTTLE = -1
+    MIN_THROTTLE = 0
     MAX_THROTTLE = 1
 
     def __init__(self,
@@ -243,12 +249,15 @@ class PWMThrottle:
             self.controller.set_pulse(self.pulse)
 
     def run_threaded(self, throttle):
-        if throttle > 0:
-            self.pulse = dk.utils.map_range(throttle, 0, self.MAX_THROTTLE,
+        if throttle < 0: 
+            throttle = 0
+        if throttle > 1: 
+            throttle = 1
+        self.pulse = dk.utils.map_range(throttle, self.MIN_THROTTLE, self.MAX_THROTTLE,
                                             self.zero_pulse, self.max_pulse)
-        else:
-            self.pulse = dk.utils.map_range(throttle, self.MIN_THROTTLE, 0,
-                                            self.min_pulse, self.zero_pulse)
+        #else:      #disable reverse
+        #    self.pulse = dk.utils.map_range(throttle, self.MIN_THROTTLE, 0,
+        #                                    self.min_pulse, self.zero_pulse)
 
     def run(self, throttle):
         self.run_threaded(throttle)

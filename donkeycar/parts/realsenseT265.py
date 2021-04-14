@@ -400,6 +400,7 @@ class ImgPreProcess(object):
         self.image = cv2.cvtColor(self.im2,cv2.COLOR_GRAY2RGB)
         self.inf_inputs = self.image.transpose(2,0,1).reshape(1,3,160,320)
         self.framecount += 1
+        print(f'framecount {self.framecount}')
         return self.image,np.array(self.inf_inputs, dtype=np.float32, order='C')/255,self.framecount
 
 class ImgAlphaBlend(object):

@@ -12,9 +12,11 @@ import numpy as np
 class StanleyController(object):
 
     def __init__(self, cfg):
+        self.cfg = cfg
         self.k = 0.5  # control gain
-        self.Kp = 0.5  # speed proportional gain
-        self.Kd = 0.2  # speed diferential gain
+        self.Kp = cfg.KP  # speed proportional gain
+        self.Kd = cfg.KD  # speed diferential gain
+        self.maxaccel = cfg.MAX_ACCEL
         self.L = 29  # [m] Wheel base of vehicle
         self.x = 0.
         self.y = 0.
@@ -35,6 +37,10 @@ class StanleyController(object):
         :return: target change in accel (float)
         """
         newaccel = self.Kp * (target - current) + self.Kd * accel
+        if newaccel > self.maxaccel:
+            newaccel = self.maxaccel 
+        if newaccel < -self.maxaccel:
+            newaccel = -self.maxaccel 
         daccel = newaccel - accel 
         return daccel 
 
@@ -105,7 +111,7 @@ class StanleyController(object):
 
         return target_idx, error_front_axle
 
-    def run(self,img_count,x,y,yaw,velturn,velfwd,rax,ray,ryaw,speedprofile,timestamp):
+    def run(self,img_count,x,y,yaw,velturn,velfwd,rax,ray,ryaw,speedprofile,timestamp,runstate):
         if img_count > self.img_count:
             self.x = x
             self.y = y
@@ -120,14 +126,20 @@ class StanleyController(object):
             self.x = x
             self.y = y
             print(f'reuse situation {self.camx},{self.camy}')
-        target_idx, _ = self.calc_target_index(rax, ray)
-        target_speed = speedprofile[target_idx]
+        
+        if runstate == 'running':
+            target_idx, _ = self.calc_target_index(rax, ray)
+            target_speed = speedprofile[target_idx]
+            delta, target_idx = self.stanley_control(rax, ray, ryaw, target_idx)
+        else: # if the car is not in a running state keep it stopped
+            target_speed = 0
+            delta = 0
+
         v = np.hypot(velfwd, velturn)
         self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
         dt = (timestamp - self.timestamp) / 1000. # dt in seconds
-        accel = (v - self.v) / dt 
-        daccel = self.pid_control(target_speed, v, accel)
+        accel = (-v - self.v) / dt  # negate velocity to fix bad decision on camera frame direction
+        daccel = self.pid_control(target_speed, -v, accel)
         self.v = v # for next time around
         self.timestamp = timestamp
-        delta, target_idx = self.stanley_control(rax, ray, ryaw, target_idx)
         return self.camx,self.camy,delta,daccel

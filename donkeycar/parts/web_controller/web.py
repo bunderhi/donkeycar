@@ -293,12 +293,9 @@ class WebConsole(tornado.web.Application):
 
         self.port = port
         self.cfg = cfg
-
-        self.Record = self.cfg.RECORD
-        self.FPV = self.cfg.FPV
-        self.RunMode = self.cfg.RUNMODE
+        self.AIPilot = cfg.AIPILOT
         self.RunState = 'Initializing'
-        self.RunCmd = None
+        self.RunCmd = 'None'
         
         handlers = [
             (r"/", RedirectHandler, dict(url="/drive")),
@@ -318,12 +315,20 @@ class WebConsole(tornado.web.Application):
 
     def run_threaded(self,RunState='Initializing'):
         self.RunState = RunState
-        return self.Record, self.FPV, self.RunMode, self.RunCmd  
+        if self.RunCmd == 'start':
+            return 'running'
+        if self.RunCmd == 'stop':
+            return 'ready'
+        return self.RunState
         
     def run(self,RunState='Initializing'):
         self.RunState = RunState
-        return self.Record, self.FPV, self.RunMode, self.RunCmd 
-
+        if self.RunCmd == 'start':
+            self.RunState = 'running'
+        if self.RunCmd == 'stop':
+            self.RunState = 'ready'
+        return self.RunState
+    
     def shutdown(self):
         pass
 
@@ -332,9 +337,7 @@ class ConsoleAPI(RequestHandler):
     def get(self):
         # Set up response dictionary.
         self.response = dict()       
-        self.response['Record'] = self.Record
-        self.response['FPV'] = self.FPV
-        self.response['RunMode'] = self.RunMode
+        self.response['AIPilot'] = self.AIPilot
         self.response['RunState'] = self.RunState
         output = json.dumps(self.response)
         self.write(output)
@@ -346,13 +349,7 @@ class ConsoleAPI(RequestHandler):
             self.write({ 'got' : 'your data' })
             for k, v in data.items():
                 print(k,v)
-                if k == 'Record':
-                    self.Record = v
-                elif k == 'FPV':
-                    self.FPV = v
-                elif k == 'Runmode':
-                    self.RunMode = v
-                elif k == 'RunCmd':
+                if k == 'RunCmd':
                     self.RunCmd = v        
         except JSONDecodeError as e:
             print('Could not decode message',self.request.body)

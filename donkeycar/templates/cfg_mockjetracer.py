@@ -16,7 +16,7 @@ print(cfg.CAMERA_RESOLUTION)
 import os
 
 #Operating modes
-RUNMODE = 'Manual' # Operating mode Manual / AIPilot
+AIPILOT= True # Operating mode Manual or AIPilot
 RECORD = False  # log to disk
 FPV = True # show camera fpv and AI plan view 
 
@@ -77,6 +77,9 @@ TIMER = False  # Display FPS timing on fpv view
 
 TARGET_SPEED = 150.0 / 100. # Target normal speed (m/s)
 PATH_INCREMENT = 40  # The path planning will create path points every 40 
+MAX_ACCEL = 1.0 # m/s**2
+KP = 0.6  # Throttle PID proportional gain
+KD = 0.8  # Throttle PID differential gain
 
 #Odometry
 HAVE_ODOM = False                   # Do you have an odometer? Uses pigpio 

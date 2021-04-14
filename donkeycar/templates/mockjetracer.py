@@ -27,6 +27,7 @@ from donkeycar.parts.realsenseT265 import ImgPreProcess,ImgAlphaBlend
 from donkeycar.parts.planner import BirdseyeView, PlanPath, PlanMap
 from donkeycar.parts.pathtracker import StanleyController
 from donkeycar.parts.trt import TensorRTSegment
+from donkeycar.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 
 from donkeycar.utils import *
 
@@ -45,11 +46,15 @@ def drive(cfg,verbose=True):
     
     #Initialize car
     V = dk.vehicle.Vehicle()
+    
     # Vehicle control web console
-    V.add(WebConsole(),inputs=[],outputs=[],threaded=True)
+    V.add(WebConsole(),inputs=['RUN/State'],outputs=['RUN/State'],threaded=True)
+    
     # FPS Camera image viewer
-    V.add(WebFpv(port=8890), inputs=['cam/fpv'], threaded=True,run_condition='AI/fpv')
-    V.add(WebFpv(port=8891), inputs=['plan/map'], threaded=True,run_condition='AI/fpv')
+    if cfg.FPV:
+        V.add(WebFpv(port=8890), inputs=['cam/fpv'], threaded=True,run_condition='fpv')
+    if cfg.FPV and cfg.AIPILOT:
+        V.add(WebFpv(port=8891), inputs=['plan/map'], threaded=True,run_condition='AI/fpv')
 
     # Mock camera from existing tub 
     inputs=['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7', 'arg8', 'arg9', 'arg10']
@@ -64,7 +69,7 @@ def drive(cfg,verbose=True):
 
     class ReadStream:
         def run(self, record):
-            print ("input record",len(record))
+            #print ("input record",len(record))
             if record is not None:
                 img_array = record[0]
                 posx = record[1]   # real posx = camera posx
@@ -92,62 +97,87 @@ def drive(cfg,verbose=True):
 
     class AIWarmup:
             '''
-            return false until the first inference is complete
+            Start part processing based on AI warmup state
             '''
             def __init__(self, cfg):
                 self.cfg = cfg
  
-            def run(self,inf_input,mask):
+            def run(self,inf_input,mask,runstate):
+                if inf_input is None:   # camera not ready
+                    return False,False,False,False,False,False
+                if self.cfg.AIPILOT== False:   # manual mode
+                    return False,False,self.cfg.RECORD,True,False,False
+                if mask is None:  # inference not ready
+                    return True,False,False,False,True,False,False
+                if runstate == 'running':  # vehicle running 
+                    return True,True,self.cfg.RECORD,True,True,True
+                else: # vehicle ready waiting for start cmd
+                    return True,True,self.cfg.RECORD,True,True,False
                 
-                if inf_input is None:
-                    return False,False,False,False
-                else:
-                    if mask is None:
-                        return True,False,False,False
-                    print("Ready to proceed")
-                    return True,True,self.cfg.RECORD,self.cfg.FPV_VIEW
 
+
+    V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask','RUN/State'], outputs=['AI/pilot','AI/processing','recording','fpv','AI/fpv','AI/running'])
+    
     if cfg.AIPILOT:
-        V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask'], outputs=['AI/pilot','AI/processing','recording','AI/fpv2'])
+        V.add(TensorRTSegment(cfg), 
+            inputs=['cam/inf_input','cam/framecount'],
+            outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=cfg.RUN_THREADED
+            )
+
+        V.add(ImgAlphaBlend(cfg),
+            inputs=['inf/mask','cam/raw','cam/framecount','inf/framecount'],
+            outputs=['cam/fpv'], run_condition='AI/fpv'
+            )
+
+        V.add(BirdseyeView(cfg),
+            inputs=['inf/mask','inf/framecount'],
+            outputs=['plan/freespace'], run_condition='AI/processing'
+            )
+        
+        V.add(PlanPath(cfg),
+            inputs=['plan/freespace','inf/framecount'],
+            outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile'], run_condition='AI/processing'
+            )
+        
+        V.add(StanleyController(cfg),
+            inputs=['inf/framecount','pos/x','pos/y','rpy/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','cam/timestamp','RUN/State'],
+            outputs=['cam/x','cam/y','plan/delta','plan/daccel'], run_condition='AI/processing'
+            )
+
+        V.add(PlanMap(cfg),
+            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/accel'],
+            outputs=['plan/map'], run_condition='AI/fpv'
+            )
     
-    V.add(TensorRTSegment(cfg), 
-        inputs=['cam/inf_input','cam/framecount'],
-        outputs=['inf/mask','inf/framecount'], run_condition='AI/pilot', threaded=cfg.RUN_THREADED
-        )
+        #Drive train setup
+        steering_controller = PCA9685(cfg.STEERING_CHANNEL, cfg.PCA9685_I2C_ADDR, busnum=cfg.PCA9685_I2C_BUSNUM)
+        steering = PWMSteering(controller=steering_controller,
+                                        left_pulse=cfg.STEERING_LEFT_PWM, 
+                                        right_pulse=cfg.STEERING_RIGHT_PWM)
+        
+        throttle_controller = PCA9685(cfg.THROTTLE_CHANNEL, cfg.PCA9685_I2C_ADDR, busnum=cfg.PCA9685_I2C_BUSNUM)
+        throttle = PWMThrottle(controller=throttle_controller,
+                                        max_pulse=cfg.THROTTLE_FORWARD_PWM,
+                                        zero_pulse=cfg.THROTTLE_STOPPED_PWM, 
+                                        min_pulse=cfg.THROTTLE_REVERSE_PWM)
 
-    V.add(ImgAlphaBlend(cfg),
-        inputs=['inf/mask','cam/raw','cam/framecount','inf/framecount'],
-        outputs=['cam/fpv'], run_condition='AI/fpv2'
-        )
-
-    V.add(BirdseyeView(cfg),
-        inputs=['inf/mask','inf/framecount'],
-        outputs=['plan/freespace'], run_condition='AI/processing'
-        )
+        V.add(steering, inputs=['plan/delta'],run_condition='AI/running')
+        V.add(throttle, inputs=['plan/daccel'],run_condition='AI/running')
+        
     
-    V.add(PlanPath(cfg),
-        inputs=['plan/freespace','inf/framecount'],
-        outputs=['plan/waypointx','plan/waypointy','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile'], run_condition='AI/processing'
-        )
-     
-    V.add(StanleyController(cfg),
-        inputs=['inf/framecount','pos/x','pos/y','rpy/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','cam/timestamp'],
-        outputs=['cam/x','cam/y','plan/delta','plan/accel'], run_condition='AI/processing'
-        )
-
-    V.add(PlanMap(cfg),
-        inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/accel'],
-        outputs=['plan/map'], run_condition='AI/fpv2'
-        )
-
-    #add tub to save data
-    inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/accel']
-    types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
-
-
+    if cfg.AIPILOT:
+        #add tub to save AI pilot data
+        inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/daccel']
+        types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+    else:
+        #add tub to save manual pilot data
+        inputs=['cam/raw','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw']
+        types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float']
+    
     th = TubHandler(path=cfg.DATA_PATH)
     tub = th.new_tub_writer(inputs=inputs, types=types)
     V.add(tub, inputs=inputs, outputs=["tub/num_records"], run_condition='recording')
+
 
     #run the vehicle
     V.start(rate_hz=cfg.DRIVE_LOOP_HZ, 
