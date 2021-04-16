@@ -28,7 +28,7 @@ class StanleyController(object):
         self.timestamp = 0
 
 
-    def pid_control(self,target,current,accel):
+    def pid_control(self,target,current,dt):
         """
         Proportional control for the speed.
         :param target: (float)
@@ -36,13 +36,13 @@ class StanleyController(object):
         :param accel (float) dv / dt 
         :return: target change in accel (float)
         """
-        newaccel = self.Kp * (target - current) + self.Kd * accel
+        accel_error = (current - target) / dt 
+        newaccel = self.Kp * (target - current) + self.Kd * accel_error
         if newaccel > self.maxaccel:
             newaccel = self.maxaccel 
         if newaccel < -self.maxaccel:
             newaccel = -self.maxaccel 
-        daccel = newaccel - accel 
-        return daccel 
+        return newaccel 
 
 
     def stanley_control(self, cx, cy, cyaw, last_target_idx):
@@ -139,7 +139,7 @@ class StanleyController(object):
         self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
         dt = (timestamp - self.timestamp) / 1000. # dt in seconds
         accel = (-v - self.v) / dt  # negate velocity to fix bad decision on camera frame direction
-        daccel = self.pid_control(target_speed, -v, accel)
+        daccel = self.pid_control(target_speed, -v, dt) - accel
         self.v = v # for next time around
         self.timestamp = timestamp
         return self.camx,self.camy,delta,daccel
