@@ -314,19 +314,22 @@ class WebConsole(tornado.web.Application):
         IOLoop.instance().start()
 
     def run_threaded(self,RunState='Initializing'):
-        self.RunState = RunState
         if self.RunCmd == 'start':
             return 'running'
-        if self.RunCmd == 'stop':
+        elif self.RunCmd == 'stop':
             return 'ready'
+        else:
+            self.RunState = RunState
         return self.RunState
         
     def run(self,RunState='Initializing'):
-        self.RunState = RunState
         if self.RunCmd == 'start':
-            self.RunState = 'running'
-        if self.RunCmd == 'stop':
-            self.RunState = 'ready'
+            return 'running'
+        elif self.RunCmd == 'stop':
+            return 'ready'
+        else:
+            self.RunState = RunState
+            return self.RunState
         return self.RunState
     
     def shutdown(self):
@@ -337,8 +340,8 @@ class ConsoleAPI(RequestHandler):
     def get(self):
         # Set up response dictionary.
         self.response = dict()       
-        self.response['AIPilot'] = self.AIPilot
-        self.response['RunState'] = self.RunState
+        self.response['AIPilot'] = self.application.AIPilot
+        self.response['RunState'] = self.application.RunState
         output = json.dumps(self.response)
         self.write(output)
 
@@ -347,10 +350,11 @@ class ConsoleAPI(RequestHandler):
             data = json.loads(self.request.body.decode('utf-8'))
             print('Got JSON data:', data)
             self.write({ 'got' : 'your data' })
-            for k, v in data.items():
-                print(k,v)
-                if k == 'RunCmd':
-                    self.RunCmd = v        
+            self.application.RunCmd = data['RunCmd']
+            if self.application.RunCmd == 'start':
+                self.application.RunState = 'running'
+            elif self.application.RunCmd == 'stop':
+                self.application.RunState = 'ready'
         except JSONDecodeError as e:
             print('Could not decode message',self.request.body)
 
