@@ -108,7 +108,7 @@ def drive(cfg,verbose=True):
                 if self.cfg.AIPILOT== False:   # manual mode
                     return False,False,self.cfg.RECORD,True,False,False
                 if mask is None:  # inference not ready
-                    return True,False,False,False,True,False,False
+                    return True,False,self.cfg.RECORD,False,False,False
                 if runstate == 'running':  # vehicle running 
                     return True,True,self.cfg.RECORD,True,True,True
                 else: # vehicle ready waiting for start cmd
