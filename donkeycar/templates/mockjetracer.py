@@ -161,13 +161,13 @@ def drive(cfg,verbose=True):
                                         zero_pulse=cfg.THROTTLE_STOPPED_PWM, 
                                         min_pulse=cfg.THROTTLE_REVERSE_PWM)
 
-        V.add(steering, inputs=['plan/delta'],run_condition='AI/running')
-        V.add(throttle, inputs=['plan/daccel'],run_condition='AI/running')
+        V.add(steering, inputs=['plan/delta'], outputs=['AI/steeringpulse'],run_condition='AI/running')
+        V.add(throttle, inputs=['plan/daccel'], outputs=['AI/throttlepulse'],run_condition='AI/running')
         
     
     if cfg.AIPILOT:
         #add tub to save AI pilot data
-        inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/daccel']
+        inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/daccel','AI/steeringpulse','AI/throttlepulse']
         types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
     else:
         #add tub to save manual pilot data

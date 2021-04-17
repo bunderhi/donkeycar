@@ -205,6 +205,7 @@ class PWMSteering:
     def run(self, delta):
         self.run_threaded(delta)
         self.controller.set_pulse(self.pulse)
+        return self.pulse
 
     def shutdown(self):
         # set steering straight
@@ -262,6 +263,7 @@ class PWMThrottle:
     def run(self, throttle):
         self.run_threaded(throttle)
         self.controller.set_pulse(self.pulse)
+        return self.pulse
 
     def shutdown(self):
         # stop vehicle
