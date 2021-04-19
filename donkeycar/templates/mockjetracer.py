@@ -21,7 +21,6 @@ import math
 
 import donkeycar as dk
 from donkeycar.parts.datastore import TubHandler,TubReader
-from donkeycar.parts.camera import ImageListCamera
 from donkeycar.parts.web_controller.web import WebFpv, WebConsole
 from donkeycar.parts.realsenseT265 import ImgPreProcess,ImgAlphaBlend
 from donkeycar.parts.planner import BirdseyeView, PlanPath, PlanMap
@@ -145,7 +144,7 @@ def drive(cfg,verbose=True):
             )
 
         V.add(PlanMap(cfg),
-            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/accel'],
+            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/accel','AI/steeringpulse','AI/throttlepulse'],
             outputs=['plan/map'], run_condition='AI/fpv'
             )
     

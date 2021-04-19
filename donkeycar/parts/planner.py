@@ -393,7 +393,7 @@ class PlanMap(object):
             uv_top_left += [0, h * line_spacing]
 
     
-    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,accel):
+    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,accel,steering=0,throttle=0):
         cax = math.floor(cx)
         cay = math.floor(cy)
         rax = np.empty_like(rx, dtype=np.int64)
@@ -404,11 +404,12 @@ class PlanMap(object):
         redmask = cv2.cvtColor(mask*200,cv2.COLOR_GRAY2RGB)
         #cv2.polylines(redmask,[waypntxy],False,(255,0,0),3)
         cv2.polylines(redmask,[raxy],False,(255,255,0),3)
-
+        steeringtxt = "{:.1f}".format(steering)
+        throttletxt = "{:.1f}".format(throttle)
         deltatxt = "{:.1f}".format(np.degrees(delta))
         acceltxt = "{:.1f}".format(accel)
-        lines = deltatxt + '\n' + '\n' + acceltxt
-        self.draw_text(redmask,text=lines,uv_top_left=(120,240))
+        lines = deltatxt + '\n' + acceltxt + '\n' + steeringtxt + '\n' + throttletxt
+        self.draw_text(redmask,text=lines,uv_top_left=(120,200))
         dy = math.floor(cay - (math.sin(delta) * 150))
         dx = math.floor(cax - (math.cos(delta) * 150))
         cv2.arrowedLine(redmask,(cax,cay),(dx,dy),(0, 255, 255), 2, cv2.LINE_AA, 0, 0.1)
