@@ -168,7 +168,7 @@ def drive(cfg,verbose=True):
                 Need to initialize some AI varibles for the tubwriter 
                 prior to AI start
             '''
-            def run(delta=0,daccel=0,steeringpulse=0,throttlepulse=0):
+            def run(delta=0.0,daccel=0.0,steeringpulse=0,throttlepulse=0):
                 return delta,daccel,steeringpulse,throttlepulse
 
         V.add(initdata, inputs=['plan/delta','plan/daccel','AI/steeringpulse','AI/throttlepulse'],
@@ -179,7 +179,7 @@ def drive(cfg,verbose=True):
     if cfg.AIPILOT:
         #add tub to save AI pilot data
         inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/daccel','AI/steeringpulse','AI/throttlepulse']
-        types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float']
+        types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'int', 'int']
     else:
         #add tub to save manual pilot data
         inputs=['cam/raw','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw']
