@@ -47,7 +47,7 @@ def drive(cfg,verbose=True):
     V = dk.vehicle.Vehicle()
     
     # Vehicle control web console
-    V.add(WebConsole(),inputs=['RUN/State'],outputs=['RUN/State'],threaded=True)
+    V.add(WebConsole(cfg),inputs=['RUN/State'],outputs=['RUN/State'],threaded=True)
     
     # FPS Camera image viewer
     if cfg.FPV:
