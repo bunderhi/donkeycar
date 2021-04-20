@@ -107,7 +107,7 @@ def drive(cfg,verbose=True):
                 if self.cfg.AIPILOT== False:   # manual mode
                     return False,False,self.cfg.RECORD,True,False,False
                 if mask is None:  # inference not ready
-                    return True,False,self.cfg.RECORD,False,False,False
+                    return True,False,False,False,False,False
                 if runstate == 'running':  # vehicle running 
                     return True,True,self.cfg.RECORD,True,True,True
                 else: # vehicle ready waiting for start cmd
@@ -178,16 +178,16 @@ def drive(cfg,verbose=True):
     
     if cfg.AIPILOT:
         #add tub to save AI pilot data
-        inputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/daccel','AI/steeringpulse','AI/throttlepulse']
+        tinputs=['plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/daccel','AI/steeringpulse','AI/throttlepulse']
         types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'int', 'int']
     else:
         #add tub to save manual pilot data
-        inputs=['cam/raw','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw']
+        tinputs=['cam/raw','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw']
         types=['image_array', 'float', 'float', 'float', 'float', 'float', 'float']
     
     th = TubHandler(path=cfg.DATA_PATH)
-    tub = th.new_tub_writer(inputs=inputs, types=types)
-    V.add(tub, inputs=inputs, outputs=["tub/num_records"], run_condition='recording')
+    tub = th.new_tub_writer(inputs=tinputs, types=types)
+    V.add(tub, inputs=tinputs, outputs=["tub/num_records"], run_condition='recording')
 
 
     #run the vehicle
