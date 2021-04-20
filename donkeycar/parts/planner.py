@@ -412,8 +412,14 @@ class PlanMap(object):
             throttletxt = "{:f}".format(throttle)
         else: 
             throttletxt = ' '
-        deltatxt = "{:.1f}".format(np.degrees(delta))
-        acceltxt = "{:.1f}".format(accel)
+        if delta is not None:
+            deltatxt = "{:.1f}".format(np.degrees(delta))
+        else: 
+            deltatxt = ' '
+        if accel is not None:
+            acceltxt = "{:.1f}".format(accel)
+        else: 
+            acceltxt = ' '
         lines = deltatxt + '\n' + acceltxt + '\n' + steeringtxt + '\n' + throttletxt
         self.draw_text(redmask,text=lines,uv_top_left=(120,200))
         dy = math.floor(cay - (math.sin(delta) * 150))
