@@ -168,11 +168,15 @@ def drive(cfg,verbose=True):
                 Need to initialize some AI varibles for the tubwriter 
                 prior to AI start
             '''
-            def run(delta=0.0,daccel=0.0,steeringpulse=0,throttlepulse=0):
-                return delta,daccel,steeringpulse,throttlepulse
+            def run(steering,throttle):
+                if steering is None:
+                    steering = 0
+                if throttle is None:
+                    throttle = 0
+                return steering,throttle
 
-        V.add(initdata, inputs=['plan/delta','plan/daccel','AI/steeringpulse','AI/throttlepulse'],
-                        outputs=['plan/delta','plan/daccel','AI/steeringpulse','AI/throttlepulse'])
+        V.add(initdata, inputs=['AI/steeringpulse','AI/throttlepulse'],
+                        outputs=['AI/steeringpulse','AI/throttlepulse'])
 
     
     

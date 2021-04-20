@@ -393,7 +393,7 @@ class PlanMap(object):
             uv_top_left += [0, h * line_spacing]
 
     
-    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,accel,steering=0,throttle=0):
+    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,accel,steering,throttle):
         cax = math.floor(cx)
         cay = math.floor(cy)
         rax = np.empty_like(rx, dtype=np.int64)
@@ -404,8 +404,14 @@ class PlanMap(object):
         redmask = cv2.cvtColor(mask*200,cv2.COLOR_GRAY2RGB)
         #cv2.polylines(redmask,[waypntxy],False,(255,0,0),3)
         cv2.polylines(redmask,[raxy],False,(255,255,0),3)
-        steeringtxt = "{:.1f}".format(steering)
-        throttletxt = "{:.1f}".format(throttle)
+        if steering is not None:
+            steeringtxt = "{:f}".format(steering)
+        else: 
+            steeringtxt = ' '
+        if throttle is not None:
+            throttletxt = "{:f}".format(throttle)
+        else: 
+            throttletxt = ' '
         deltatxt = "{:.1f}".format(np.degrees(delta))
         acceltxt = "{:.1f}".format(accel)
         lines = deltatxt + '\n' + acceltxt + '\n' + steeringtxt + '\n' + throttletxt

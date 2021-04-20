@@ -330,7 +330,6 @@ class WebConsole(tornado.web.Application):
         else:
             self.RunState = RunState
             return self.RunState
-        return self.RunState
     
     def shutdown(self):
         pass
