@@ -313,23 +313,23 @@ class WebConsole(tornado.web.Application):
         self.listen(self.port)
         IOLoop.instance().start()
 
-    def run_threaded(self,RunState='Initializing'):
+    def run_threaded(self,RunState):
         if self.RunCmd == 'start':
-            return 'running'
+            self.RunState = 'running'
         elif self.RunCmd == 'stop':
-            return 'ready'
+            self.RunState = 'ready'
         else:
             self.RunState = RunState
         return self.RunState
         
-    def run(self,RunState='Initializing'):
+    def run(self,RunState):
         if self.RunCmd == 'start':
-            return 'running'
+            self.RunState = 'running'
         elif self.RunCmd == 'stop':
-            return 'ready'
+            self.RunState = 'ready'
         else:
             self.RunState = RunState
-            return self.RunState
+        return self.RunState
     
     def shutdown(self):
         pass

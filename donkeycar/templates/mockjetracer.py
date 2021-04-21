@@ -103,19 +103,20 @@ def drive(cfg,verbose=True):
  
             def run(self,inf_input,mask,runstate):
                 if inf_input is None:   # camera not ready
-                    return False,False,False,False,False,False
+                    return False,False,False,False,False,False,'initializing'
                 if self.cfg.AIPILOT== False:   # manual mode
-                    return False,False,self.cfg.RECORD,True,False,False
+                    return False,False,self.cfg.RECORD,True,False,False,'ready'
                 if mask is None:  # inference not ready
-                    return True,False,False,False,False,False
+                    return True,False,False,False,False,False,'initializing'
                 if runstate == 'running':  # vehicle running 
-                    return True,True,self.cfg.RECORD,True,True,True
+                    return True,True,self.cfg.RECORD,True,True,True,runstate
                 else: # vehicle ready waiting for start cmd
-                    return True,True,self.cfg.RECORD,True,True,False
+                    return True,True,self.cfg.RECORD,True,True,False,'ready'
                 
 
 
-    V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask','RUN/State'], outputs=['AI/pilot','AI/processing','recording','fpv','AI/fpv','AI/running'])
+    V.add(AIWarmup(cfg), inputs=['cam/inf_input','inf/mask','RUN/State'],
+             outputs=['AI/pilot','AI/processing','recording','fpv','AI/fpv','AI/running','RUN/State'])
     
     if cfg.AIPILOT:
         V.add(TensorRTSegment(cfg), 
