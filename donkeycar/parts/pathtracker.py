@@ -142,4 +142,5 @@ class StanleyController(object):
         daccel = self.pid_control(target_speed, -v, dt) - accel
         self.v = v # for next time around
         self.timestamp = timestamp
+        print(self.yaw,delta,self.v, v, accel, daccel)
         return self.camx,self.camy,delta,daccel
