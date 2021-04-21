@@ -127,6 +127,11 @@ class StanleyController(object):
             self.y = y
             print(f'reuse situation {self.camx},{self.camy}')
         
+        v = np.hypot(velfwd, velturn)
+        self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
+        dt = (timestamp - self.timestamp) / 1000. # dt in seconds
+        accel = (-v - self.v) / dt  # negate velocity to fix bad decision on camera frame direction
+        
         if runstate == 'running':
             target_idx, _ = self.calc_target_index(rax, ray)
             target_speed = speedprofile[target_idx]
@@ -135,12 +140,8 @@ class StanleyController(object):
             target_speed = 0
             delta = 0
 
-        v = np.hypot(velfwd, velturn)
-        self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
-        dt = (timestamp - self.timestamp) / 1000. # dt in seconds
-        accel = (-v - self.v) / dt  # negate velocity to fix bad decision on camera frame direction
         daccel = self.pid_control(target_speed, -v, dt) - accel
+        print(self.yaw,delta,self.v, v, accel, daccel)
         self.v = v # for next time around
         self.timestamp = timestamp
-        print(self.yaw,delta,self.v, v, accel, daccel)
         return self.camx,self.camy,delta,daccel
