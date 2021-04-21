@@ -162,23 +162,6 @@ def drive(cfg,verbose=True):
 
         V.add(steering, inputs=['plan/delta'], outputs=['AI/steeringpulse'],run_condition='AI/running')
         V.add(throttle, inputs=['plan/daccel'], outputs=['AI/throttlepulse'],run_condition='AI/running')
-
-        class initdata():
-            '''
-                Need to initialize some AI varibles for the tubwriter 
-                prior to AI start
-            '''
-            def run(steering,throttle):
-                if steering is None:
-                    steering = 0
-                if throttle is None:
-                    throttle = 0
-                return steering,throttle
-
-        V.add(initdata, inputs=['AI/steeringpulse','AI/throttlepulse'],
-                        outputs=['AI/steeringpulse','AI/throttlepulse'])
-
-    
     
     if cfg.AIPILOT:
         #add tub to save AI pilot data
