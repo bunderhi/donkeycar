@@ -36,7 +36,7 @@ class StanleyController(object):
         :param accel (float) dv / dt 
         :return: target change in accel (float)
         """
-        accel_error = (current - target) / dt 
+        accel_error = (target - current) / dt 
         newaccel = self.Kp * (target - current) + self.Kd * accel_error
         if newaccel > self.maxaccel:
             newaccel = self.maxaccel 
@@ -138,10 +138,10 @@ class StanleyController(object):
             delta, target_idx = self.stanley_control(rax, ray, ryaw, target_idx)
         else: # if the car is not in a running state keep it stopped
             target_speed = 0
-            delta = 0
-
+            delta = -np.pi/2
+        yaw_correction = np.arctan2(velfwd, velturn) - delta
         daccel = self.pid_control(target_speed, -v, dt) - accel
-        print(self.yaw,delta,self.v, v, accel, daccel)
+        print(np.arctan2(velfwd, velturn),delta,yaw_correction,self.v, v, accel, daccel)
         self.v = v # for next time around
         self.timestamp = timestamp
-        return self.camx,self.camy,delta,daccel
+        return self.camx,self.camy,yaw_correction,daccel

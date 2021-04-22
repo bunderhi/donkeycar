@@ -5,7 +5,7 @@ are wrapped in a mixer class before being used in the drive loop.
 """
 
 import time
-
+import math
 import donkeycar as dk
 
         
@@ -170,8 +170,8 @@ class PWMSteering:
     """
     Wrapper over a PWM motor controller to convert angles to PWM pulses.
     """
-    LEFT_ANGLE = -1
-    RIGHT_ANGLE = 1
+    LEFT_ANGLE = -math.pi
+    RIGHT_ANGLE = 0.0
 
     def __init__(self,
                  controller=None,
@@ -181,9 +181,9 @@ class PWMSteering:
         self.controller = controller
         self.left_pulse = left_pulse
         self.right_pulse = right_pulse
-        self.pulse = dk.utils.map_range(0, self.LEFT_ANGLE, self.RIGHT_ANGLE,
+        self.pulse = dk.utils.map_range(math.pi/2, self.LEFT_ANGLE, self.RIGHT_ANGLE,
                                         self.left_pulse, self.right_pulse)
-        self.angle = 0.0
+        self.angle = math.pi/2
         self.running = True
         print('PWM Steering created')
 
@@ -193,10 +193,10 @@ class PWMSteering:
 
     def run_threaded(self, delta):
         self.angle += delta
-        if self.angle > 1.0: 
-            self.angle = 1.0
-        if self.angle < -1.0: 
-            self.angle = -1.0    
+        if self.angle > 0: 
+            self.angle = 0
+        if self.angle < -math.pi: 
+            self.angle = -math.pi   
         # map absolute angle to angle that vehicle can implement.
         self.pulse = dk.utils.map_range(self.angle,
                                         self.LEFT_ANGLE, self.RIGHT_ANGLE,
