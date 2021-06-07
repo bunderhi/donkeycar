@@ -280,7 +280,7 @@ class PlanPath(object):
         target_speed = self.cfg.TARGET_SPEED
         speed_profile = [target_speed] * len(ryaw)
         # speed down as you near the planning horizon (goal)
-        for i in range(3):
+        for i in range(1,3):
             speed_profile[-i] = target_speed / (5 - i)
             if speed_profile[-i] <= 0.01:
                 speed_profile[-i] = 0.01
