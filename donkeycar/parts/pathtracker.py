@@ -55,7 +55,7 @@ class StanleyController(object):
         return throttle
 
 
-    def stanley_control(self, cx, cy, cyaw, last_target_idx):
+    def stanley_control(self, cx, cy, cyaw, v, last_target_idx):
         """
         Stanley steering control.
         :param state: (State object)
@@ -73,7 +73,7 @@ class StanleyController(object):
         # theta_e corrects the heading error
         theta_e = self.normalize_angle(cyaw[current_target_idx] - self.yaw)
         # theta_d corrects the cross track error
-        theta_d = np.arctan2(self.k * error_front_axle, self.v)
+        theta_d = np.arctan2(self.k * error_front_axle, v)
         # Steering control
         delta = theta_e + theta_d
         
@@ -144,7 +144,7 @@ class StanleyController(object):
         if runstate == 'running':
             target_idx, _ = self.calc_target_index(rax, ray)
             target_speed = speedprofile[target_idx]
-            delta, target_idx = self.stanley_control(rax, ray, ryaw, target_idx)
+            delta, target_idx = self.stanley_control(rax, ray, ryaw, v, target_idx)
         else: # if the car is not in a running state keep it stopped
             target_speed = 0.0
             delta = -np.pi/2
