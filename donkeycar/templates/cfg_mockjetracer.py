@@ -77,8 +77,8 @@ TIMER = False  # Display FPS timing on fpv view
 
 TARGET_SPEED = 150.0 / 100. # Target normal speed (m/s)
 PATH_INCREMENT = 40  # The path planning will create path points every 40 
-MAX_ACCEL = 1.0 # m/s**2
-KP = 0.5  # Throttle PID proportional gain
+MAX_ACCEL = 0.5 # m/s**2
+KP = 0.8  # Throttle PID proportional gain
 KD = 0.5  # Throttle PID differential gain
 
 #Odometry

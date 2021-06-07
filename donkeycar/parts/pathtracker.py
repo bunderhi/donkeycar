@@ -11,38 +11,48 @@ import numpy as np
 
 class StanleyController(object):
 
+    MIN_THROTTLE = 0.0
+    MAX_THROTTLE = 1.0
+
     def __init__(self, cfg):
         self.cfg = cfg
         self.k = 0.5  # control gain
         self.Kp = cfg.KP  # speed proportional gain
         self.Kd = cfg.KD  # speed diferential gain
+        self.Kta = 1.0 # accel to throttle ratio
         self.maxaccel = cfg.MAX_ACCEL
         self.L = 29  # [m] Wheel base of vehicle
         self.x = 0.
         self.y = 0.
         self.camx = 105.
         self.camy = 400.
-        self.v = 0. # current Velocity
         self.yaw = 0. # Current yaw (birdseye frame)
+        self.throttle = 0. # current throttle setting
         self.img_count = 0
         self.timestamp = 0
 
 
-    def pid_control(self,target,current,dt):
+    def constant_speed_control(self,v_target,v_current,throttle,dt):
         """
         Proportional control for the speed.
-        :param target: (float)
-        :param current: (float)
-        :param accel (float) dv / dt 
-        :return: target change in accel (float)
+        :param target v: (float)
+        :param current v: (float)
+        :param previous v: (float)
+        :param dt: (float) 
+        :return target change in accel: (float)
         """
-        accel_error = (target - current) / dt 
-        newaccel = self.Kp * (target - current) + self.Kd * accel_error
-        if newaccel > self.maxaccel:
-            newaccel = self.maxaccel 
-        if newaccel < -self.maxaccel:
-            newaccel = -self.maxaccel 
-        return newaccel 
+        v_correction = self.Kp * (v_target - v_current)
+        accel_delta = v_correction / dt
+        if accel_delta > self.maxaccel:
+            accel_delta = self.maxaccel 
+        if accel_delta < -self.maxaccel:
+            accel_delta = -self.maxaccel 
+        throttle = throttle + (accel_delta * self.Kta)  
+        if throttle < self.MIN_THROTTLE: 
+            throttle = self.MIN_THROTTLE
+        if throttle > self.MAX_THROTTLE: 
+            throttle = self.MAX_THROTTLE
+        return throttle
 
 
     def stanley_control(self, cx, cy, cyaw, last_target_idx):
@@ -127,21 +137,20 @@ class StanleyController(object):
             self.y = y
             print(f'reuse situation {self.camx},{self.camy}')
         
-        v = np.hypot(velfwd, velturn)
+        v = np.abs(np.hypot(velfwd, velturn))
         self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
-        dt = (timestamp - self.timestamp) / 1000. # dt in seconds
-        accel = (-v - self.v) / dt  # negate velocity to fix bad decision on camera frame direction
+        dt = (timestamp - self.timestamp) / 1000. # dt in seconds  
         
         if runstate == 'running':
             target_idx, _ = self.calc_target_index(rax, ray)
             target_speed = speedprofile[target_idx]
             delta, target_idx = self.stanley_control(rax, ray, ryaw, target_idx)
         else: # if the car is not in a running state keep it stopped
-            target_speed = 0
+            target_speed = 0.0
             delta = -np.pi/2
         yaw_correction = np.arctan2(velfwd, velturn) - delta
-        daccel = self.pid_control(target_speed, -v, dt) - accel
-        print(np.arctan2(velfwd, velturn),delta,yaw_correction,self.v, v, accel, daccel)
-        self.v = v # for next time around
+        throttle = self.constant_speed_control(target_speed, v, self.throttle, dt)
+        print(np.arctan2(velfwd, velturn),delta,yaw_correction, v, target_speed, throttle)
+        self.throttle = throttle # for next time around
         self.timestamp = timestamp
-        return self.camx,self.camy,yaw_correction,daccel
+        return self.camx,self.camy,yaw_correction,throttle

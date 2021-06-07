@@ -219,8 +219,8 @@ class PWMThrottle:
     Wrapper over a PWM motor controller to convert -1 to 1 throttle
     values to PWM pulses.
     """
-    MIN_THROTTLE = 0
-    MAX_THROTTLE = 1
+    MIN_THROTTLE = 0.0
+    MAX_THROTTLE = 1.0
 
     def __init__(self,
                  controller=None,
@@ -250,10 +250,10 @@ class PWMThrottle:
             self.controller.set_pulse(self.pulse)
 
     def run_threaded(self, throttle):
-        if throttle < 0: 
-            throttle = 0
-        if throttle > 1: 
-            throttle = 1
+        if throttle < self.MIN_THROTTLE: 
+            throttle = self.MIN_THROTTLE
+        if throttle > self.MAX_THROTTLE: 
+            throttle = self.MAX_THROTTLE
         self.pulse = dk.utils.map_range(throttle, self.MIN_THROTTLE, self.MAX_THROTTLE,
                                             self.zero_pulse, self.max_pulse)
         #else:      #disable reverse
