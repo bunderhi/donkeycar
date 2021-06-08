@@ -42,7 +42,7 @@ class StanleyController(object):
         :return target change in accel: (float)
         """
         v_correction = self.Kp * (v_target - v_current)
-        accel_delta = v_correction / dt
+        accel_delta = v_correction # /dt
         if accel_delta > self.maxaccel:
             accel_delta = self.maxaccel 
         if accel_delta < -self.maxaccel:
