@@ -192,7 +192,7 @@ class PWMSteering:
             self.controller.set_pulse(self.pulse)
 
     def run_threaded(self, delta):
-        self.angle += delta
+        self.angle = delta
         if self.angle > math.pi: 
             self.angle = math.pi 
         if self.angle < 0: 
@@ -201,7 +201,6 @@ class PWMSteering:
         self.pulse = dk.utils.map_range(self.angle,
                                         self.LEFT_ANGLE, self.RIGHT_ANGLE,
                                         self.left_pulse, self.right_pulse)
-
     def run(self, delta):
         self.run_threaded(delta)
         self.controller.set_pulse(self.pulse)
