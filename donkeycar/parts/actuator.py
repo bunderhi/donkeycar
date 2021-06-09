@@ -193,10 +193,10 @@ class PWMSteering:
 
     def run_threaded(self, delta):
         self.angle += delta
-        if self.angle > 0: 
-            self.angle = 0
-        if self.angle < -math.pi: 
-            self.angle = -math.pi   
+        if self.angle > math.pi: 
+            self.angle = math.pi 
+        if self.angle < 0: 
+            self.angle = 0   
         # map absolute angle to angle that vehicle can implement.
         self.pulse = dk.utils.map_range(self.angle,
                                         self.LEFT_ANGLE, self.RIGHT_ANGLE,
