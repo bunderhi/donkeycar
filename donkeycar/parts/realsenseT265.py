@@ -366,7 +366,7 @@ class RS_T265RAW(object):
 
     def run_threaded(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms
-        return self.pos, self.vel, self.acc, self.rpy, self.img  #, self.mapper_confidence, self.timestamp 
+        return self.pos, self.vel, self.acc, self.rpy, self.img, self.mapper_confidence, self.timestamp 
 
     def run(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms

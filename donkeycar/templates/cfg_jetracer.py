@@ -17,16 +17,14 @@ import os
 
 #Operating modes
 AIPILOT= True # Operating mode Manual or AIPilot
-RECORD = False  # log to disk
-FPV = True # show camera fpv and AI plan view 
+RECORD = True  # log to disk
+FPV = True # capture camera fpv and AI plan view 
 
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(CAR_PATH, 'data')
 MODEL_PATH = os.path.join(CAR_PATH, 'models/model10.onnx')
 ENGINE_PATH = os.path.join(CAR_PATH, 'engine/model10.trt')
-#PATH_MASK = '/media/C63B-4FCD/data/**/*.jpg'
-READ_PATH = '/media/C63B-4FCD/data/tub'
 
 # TensorRT
 RUN_THREADED = True  # Run the tensorRT engine threaded
@@ -53,9 +51,9 @@ STEERING_RIGHT_PWM = 460        #pwm value for full right steering
 
 #THROTTLE
 THROTTLE_CHANNEL = 1            #channel on the 9685 pwm board 0-15
-THROTTLE_FORWARD_PWM = 290      #pwm value for max forward throttle
+THROTTLE_FORWARD_PWM = 260      #pwm value for max forward throttle
 THROTTLE_STOPPED_PWM = 360      #pwm value for no movement
-THROTTLE_REVERSE_PWM = 400      #pwm value for max reverse throttle
+THROTTLE_REVERSE_PWM = 450      #pwm value for max reverse throttle
 
 #Camera
 IMAGE_W = 224
@@ -77,7 +75,7 @@ TIMER = False  # Display FPS timing on fpv view
 
 TARGET_SPEED = 150.0 / 100. # Target normal speed (m/s)
 PATH_INCREMENT = 40  # The path planning will create path points every 40 
-MAX_ACCEL = 0.5 # m/s**2
+MAX_ACCEL = 1.0 # m/s**2
 KP = 0.8  # Throttle PID proportional gain
 KD = 0.5  # Throttle PID differential gain
 
