@@ -113,7 +113,7 @@ def drive(cfg,verbose=True):
                 if runstate == 'running':  # vehicle running 
                     return True,True,self.cfg.RECORD,True,True,True,runstate
                 else: # vehicle ready waiting for start cmd
-                    return True,True,self.cfg.RECORD,True,True,False,'ready'
+                    return True,True,self.cfg.RECORD,True,True,True,'ready'
                 
 
 
