@@ -67,7 +67,7 @@ def drive(cfg,verbose=True):
 
     # This requires use of the Intel Realsense T265
     rs = RS_T265RAW(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)
-    V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'cam/image_array', 'cam/timestamp'], threaded=True)
+    V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'cam/image_array'], threaded=True)
 
     class ReadStream:
         def run(self, pos,vel,rpy):
@@ -142,7 +142,7 @@ def drive(cfg,verbose=True):
             )
         
         V.add(StanleyController(cfg),
-            inputs=['inf/framecount','pos/x','pos/y','rpy/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','cam/timestamp','RUN/State'],
+            inputs=['inf/framecount','pos/x','pos/y','rpy/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','RUN/State'],
             outputs=['cam/x','cam/y','plan/delta','plan/throttle'], run_condition='AI/processing'
             )
 

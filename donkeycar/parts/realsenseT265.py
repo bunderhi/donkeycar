@@ -346,7 +346,7 @@ class RS_T265RAW(object):
             self.rotation = data.rotation
             self.mapper_confidence = data.mapper_confidence
             self.timestamp = pose.get_timestamp()
-            logging.info('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z, self.timestamp ))
+            logging.info('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z))
 
             # Compute roll, pitch, and yaw
             self.rpy = RPY(self.rotation)
@@ -366,7 +366,7 @@ class RS_T265RAW(object):
 
     def run_threaded(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms
-        return self.pos, self.vel, self.acc, self.rpy, self.img, self.timestamp 
+        return self.pos, self.vel, self.acc, self.rpy, self.img
 
     def run(self, enc_vel_ms):
         self.enc_vel_ms = enc_vel_ms

@@ -30,16 +30,13 @@ class StanleyController(object):
         self.v = 0.
         self.throttle = 0. # current throttle setting
         self.img_count = 0
-        self.timestamp = 0
 
-
-    def constant_speed_control(self,v_target,v_current,throttle,dt):
+    def constant_speed_control(self,v_target,v_current,throttle):
         """
         Proportional control for the speed.
         :param target v: (float)
         :param current v: (float)
         :param previous v: (float)
-        :param dt: (float) 
         :return target change in accel: (float)
         """
         v_correction = self.Kp * (v_target - v_current)
@@ -123,7 +120,7 @@ class StanleyController(object):
 
         return target_idx, error_front_axle
 
-    def run(self,img_count,x,y,yaw,velturn,velfwd,rax,ray,ryaw,speedprofile,timestamp,runstate):
+    def run(self,img_count,x,y,yaw,velturn,velfwd,rax,ray,ryaw,speedprofile,runstate):
         if img_count > self.img_count:
             self.x = x
             self.y = y
@@ -141,7 +138,7 @@ class StanleyController(object):
         
         v = np.abs(np.hypot(velfwd, velturn))
         self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
-        dt = (timestamp - self.timestamp) / 1000. # dt in seconds  
+        #dt = (timestamp - self.timestamp) / 1000. # dt in seconds  
         
         if runstate == 'running':
             target_idx, _ = self.calc_target_index(rax, ray)
@@ -151,9 +148,8 @@ class StanleyController(object):
             target_speed = 0.0
             delta = np.pi/2
         yaw_correction = np.arctan2(velfwd, velturn) - delta
-        throttle = self.constant_speed_control(target_speed, v, self.throttle, dt)
+        throttle = self.constant_speed_control(target_speed, v, self.throttle)
         print(np.arctan2(velfwd, velturn),delta,yaw_correction, v, target_speed, throttle)
         self.throttle = throttle # for next time around
         self.v = v
-        self.timestamp = timestamp
         return self.camx,self.camy,delta,throttle
