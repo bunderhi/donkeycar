@@ -23,8 +23,8 @@ FPV = True # capture camera fpv and AI plan view
 #PATHS
 CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
 DATA_PATH = os.path.join(CAR_PATH, 'data')
-MODEL_PATH = os.path.join(CAR_PATH, 'models/model10.onnx')
-ENGINE_PATH = os.path.join(CAR_PATH, 'engine/model10.trt')
+MODEL_PATH = os.path.join(CAR_PATH, 'models/jetracer.onnx')
+ENGINE_PATH = os.path.join(CAR_PATH, 'engine/jetracer.trt')
 
 # TensorRT
 RUN_THREADED = True  # Run the tensorRT engine threaded
