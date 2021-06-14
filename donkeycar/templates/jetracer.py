@@ -67,7 +67,7 @@ def drive(cfg,verbose=True):
 
     # This requires use of the Intel Realsense T265
     rs = RS_T265RAW(image_output=True, calib_filename=cfg.WHEEL_ODOM_CALIB)
-    V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'cam/image_array','rs/mapper_confidence', 'cam/timestamp'], threaded=True)
+    V.add(rs, inputs=['enc/vel_m_s'], outputs=['rs/pos', 'rs/vel', 'rs/acc', 'rs/rpy', 'cam/image_array', 'cam/timestamp'], threaded=True)
 
     class ReadStream:
         def run(self, pos,vel,rpy):
