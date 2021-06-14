@@ -393,15 +393,18 @@ class ImgPreProcess(object):
         self.framecount = 0
 
     def run(self, img_arr):
-        self.gray = cv2.cvtColor(img_arr,cv2.COLOR_RGB2GRAY)
-        self.crop_img = self.gray[230:550, 130:770]
-        self.crop_img = self.clahe.apply(self.crop_img)
-        self.im2 = cv2.resize(self.crop_img,None,fx=0.5,fy=0.5,interpolation=cv2.INTER_AREA)
-        self.image = cv2.cvtColor(self.im2,cv2.COLOR_GRAY2RGB)
-        self.inf_inputs = self.image.transpose(2,0,1).reshape(1,3,160,320)
-        self.framecount += 1
-        print(f'framecount {self.framecount}')
-        return self.image,np.array(self.inf_inputs, dtype=np.float32, order='C')/255,self.framecount
+        if img_arr is not None:
+            self.gray = cv2.cvtColor(img_arr,cv2.COLOR_RGB2GRAY)
+            self.crop_img = self.gray[230:550, 130:770]
+            self.crop_img = self.clahe.apply(self.crop_img)
+            self.im2 = cv2.resize(self.crop_img,None,fx=0.5,fy=0.5,interpolation=cv2.INTER_AREA)
+            self.image = cv2.cvtColor(self.im2,cv2.COLOR_GRAY2RGB)
+            self.inf_inputs = self.image.transpose(2,0,1).reshape(1,3,160,320)
+            self.framecount += 1
+            print(f'framecount {self.framecount}')
+            return self.image,np.array(self.inf_inputs, dtype=np.float32, order='C')/255,self.framecount
+        else:
+            return None,None,self.framecount
 
 class ImgAlphaBlend(object):
     '''
