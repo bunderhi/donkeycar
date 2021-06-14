@@ -27,6 +27,7 @@ class StanleyController(object):
         self.camx = 105.
         self.camy = 400.
         self.yaw = 0. # Current yaw (birdseye frame)
+        self.v = 0.
         self.throttle = 0. # current throttle setting
         self.img_count = 0
         self.timestamp = 0
@@ -42,7 +43,8 @@ class StanleyController(object):
         :return target change in accel: (float)
         """
         v_correction = self.Kp * (v_target - v_current)
-        accel_delta = v_correction # /dt
+        current_accel = v_current - self.v
+        accel_delta = v_correction - current_accel
         if accel_delta > self.maxaccel:
             accel_delta = self.maxaccel 
         if accel_delta < -self.maxaccel:
@@ -152,5 +154,6 @@ class StanleyController(object):
         throttle = self.constant_speed_control(target_speed, v, self.throttle, dt)
         print(np.arctan2(velfwd, velturn),delta,yaw_correction, v, target_speed, throttle)
         self.throttle = throttle # for next time around
+        self.v = v
         self.timestamp = timestamp
         return self.camx,self.camy,delta,throttle
