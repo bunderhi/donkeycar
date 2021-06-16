@@ -47,7 +47,25 @@ def drive(cfg,verbose=True):
     V = dk.vehicle.Vehicle()
     
     # Vehicle control web console
-    V.add(WebConsole(cfg),inputs=['RUN/State'],outputs=['RUN/State'],threaded=True)
+    #V.add(WebConsole(cfg),inputs=['RUN/State'],outputs=['RUN/State'],threaded=True)
+    
+    # Vehicle control web console is not currently reliable so hardcode run state
+    class HardcodeState():
+        def __init__(self):
+            self.starttime = time.time()
+        
+        def run(self,runstate):
+            if runstate == 'running':
+                return runstate
+            currenttime = time.time()
+            if currenttime - self.starttime > 5.0:
+                return 'running'
+            else:
+                return 'ready'
+
+
+    V.add(HardcodeState(), inputs=['RUN/State'],outputs=['RUN/State'])
+    
     
     # FPS Camera image viewer
     #if cfg.FPV:
@@ -168,7 +186,7 @@ def drive(cfg,verbose=True):
     
     if cfg.AIPILOT:
         #add tub to save AI pilot data
-        tinputs=['cam/raw','plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/throttle','AI/steeringpulse','AI/throttlepulse']
+        tinputs=['cam/fpv','plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/throttle','AI/steeringpulse','AI/throttlepulse']
         types=['image_array','image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'int', 'int']
     else:
         #add tub to save manual pilot data
