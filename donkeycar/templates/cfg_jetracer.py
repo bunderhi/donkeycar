@@ -73,7 +73,7 @@ ROI_CROP_BOTTOM = 0                 #the number of rows of pixels to ignore on t
 ALPHA = 0.5  # Alpha blend value used for fpv image (camera image + mask)
 TIMER = False  # Display FPS timing on fpv view
 
-TARGET_SPEED = 150.0 / 100. # Target normal speed (m/s)
+TARGET_SPEED = 100.0 / 100. # Target normal speed (m/s)
 PATH_INCREMENT = 40  # The path planning will create path points every 40 
 MAX_ACCEL = 1.0 # m/s**2
 KP = 0.8  # Throttle PID proportional gain

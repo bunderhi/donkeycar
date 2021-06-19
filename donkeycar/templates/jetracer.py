@@ -163,11 +163,6 @@ def drive(cfg,verbose=True):
             inputs=['inf/framecount','pos/x','pos/y','rpy/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','RUN/State'],
             outputs=['cam/x','cam/y','plan/delta','plan/throttle'], run_condition='AI/processing'
             )
-
-        V.add(PlanMap(cfg),
-            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/throttle','AI/steeringpulse','AI/throttlepulse'],
-            outputs=['plan/map'], run_condition='AI/fpv'
-            )
     
         #Drive train setup
         steering_controller = PCA9685(cfg.STEERING_CHANNEL, cfg.PCA9685_I2C_ADDR, busnum=cfg.PCA9685_I2C_BUSNUM)
@@ -183,7 +178,12 @@ def drive(cfg,verbose=True):
 
         V.add(steering, inputs=['plan/delta'], outputs=['AI/steeringpulse'],run_condition='AI/running')
         V.add(throttle, inputs=['plan/throttle'], outputs=['AI/throttlepulse'],run_condition='AI/running')
-    
+        
+        V.add(PlanMap(cfg),
+            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/throttle','AI/steeringpulse','AI/throttlepulse'],
+            outputs=['plan/map'], run_condition='AI/fpv'
+            )
+            
     if cfg.AIPILOT:
         #add tub to save AI pilot data
         tinputs=['cam/fpv','plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/throttle','AI/steeringpulse','AI/throttlepulse']

@@ -305,10 +305,10 @@ class PlanPath(object):
         left = first_nonzero(mask, axis=1, invalid_val=-1)
         right = last_nonzero(mask, axis=1, invalid_val=-1)
         # print (left.shape)
-        # find topmost row with at least one nonzero entry
+        # find topmost row with at least 50 nonzero entries
         for idx, x in np.ndenumerate(left):   
             if x>-1:
-                if right[idx] > x:
+                if right[idx] > x + 50:
                     goalx = math.floor(((x + right[idx]) / 2))
                     goaly = idx[0]
                     break
@@ -422,8 +422,8 @@ class PlanMap(object):
             acceltxt = ' '
         lines = deltatxt + '\n' + acceltxt + '\n' + steeringtxt + '\n' + throttletxt
         self.draw_text(redmask,text=lines,uv_top_left=(120,200))
-        dy = math.floor(cay - (math.sin(delta) * 150))
-        dx = math.floor(cax - (math.cos(delta) * 150))
+        dy = math.floor(cay - (math.sin(delta) * 100))
+        dx = math.floor(cax - (math.cos(delta) * 100))
         cv2.arrowedLine(redmask,(cax,cay),(dx,dy),(0, 255, 255), 2, cv2.LINE_AA, 0, 0.1)
         ex = math.floor(cax + (velturn*100.0))
         ey = math.floor(cay + (velfwd*100.0))
