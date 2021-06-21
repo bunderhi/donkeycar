@@ -102,6 +102,7 @@ class TensorRTSegment(object):
             self.inf_inputs = inf_inputs
             self.framecount = framecount
             self.newimage = True
+        print(f'trt framecount {framecount} infcount {self.infcount}')
         return self.mask,self.infcount
 
     def shutdown(self):
