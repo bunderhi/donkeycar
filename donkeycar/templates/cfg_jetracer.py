@@ -47,7 +47,7 @@ PCA9685_I2C_BUSNUM = 1   #None will auto detect, which is fine on the pi. But ot
 #STEERING
 STEERING_CHANNEL = 0            #channel on the 9685 pwm board 0-15
 STEERING_LEFT_PWM = 290         #pwm value for full left steering
-STEERING_RIGHT_PWM = 460        #pwm value for full right steering
+STEERING_RIGHT_PWM = 480        #pwm value for full right steering
 
 #THROTTLE
 THROTTLE_CHANNEL = 1            #channel on the 9685 pwm board 0-15

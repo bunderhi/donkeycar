@@ -170,13 +170,13 @@ class PWMSteering:
     """
     Wrapper over a PWM motor controller to convert angles to PWM pulses.
     """
-    LEFT_ANGLE = 0.0
-    RIGHT_ANGLE = math.pi
+    LEFT_ANGLE = (math.pi / 2) - 0.183
+    RIGHT_ANGLE = (math.pi / 2) + 0.183
 
     def __init__(self,
                  controller=None,
                  left_pulse=290,
-                 right_pulse=490):
+                 right_pulse=480):
 
         self.controller = controller
         self.left_pulse = left_pulse
