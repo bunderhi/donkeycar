@@ -147,9 +147,9 @@ class StanleyController(object):
         else: # if the car is not in a running state keep it stopped
             target_speed = 0.0
             delta = np.pi/2
-        yaw_correction = np.arctan2(velfwd, velturn) - delta
+        yaw_correction = delta - np.abs(np.arctan2(velfwd, velturn)) 
         throttle = self.constant_speed_control(target_speed, v, self.throttle)
         print(np.arctan2(velfwd, velturn),delta,yaw_correction, v, target_speed, throttle)
         self.throttle = throttle # for next time around
         self.v = v
-        return self.camx,self.camy,delta,throttle
+        return self.camx,self.camy,yaw_correction,throttle

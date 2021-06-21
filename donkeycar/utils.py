@@ -252,7 +252,17 @@ def map_range(x, X_min, X_max, Y_min, Y_max):
 
     return int(y)
 
-
+def range_intvl(x_intvl, X_min, X_max, Y_min, Y_max):
+    '''
+    Linear mapping between two ranges of values
+    like map_range but for a x interval not absolute x value
+    '''
+    X_range = X_max - X_min
+    Y_range = Y_max - Y_min
+    YX_ratio = Y_range/X_range
+    y_intvl = x_intvl * YX_ratio // 1
+    return int(y_intvl)
+    
 def map_range_float(x, X_min, X_max, Y_min, Y_max):
     '''
     Same as map_range but supports floats return, rounded to 2 decimal places

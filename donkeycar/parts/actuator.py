@@ -191,18 +191,17 @@ class PWMSteering:
         while self.running:
             self.controller.set_pulse(self.pulse)
 
-    def run_threaded(self, delta):
-        self.angle = delta
-        if self.angle > math.pi: 
-            self.angle = math.pi 
-        if self.angle < 0: 
-            self.angle = 0   
-        # map absolute angle to angle that vehicle can implement.
-        self.pulse = dk.utils.map_range(self.angle,
+    def run_threaded(self, yaw_correction):
+  
+        # convert a turn correction to a servo pulse value
+        self.pulse_correction = dk.utils.range_intvl(yaw_correction,
                                         self.LEFT_ANGLE, self.RIGHT_ANGLE,
                                         self.left_pulse, self.right_pulse)
-    def run(self, delta):
-        self.run_threaded(delta)
+        self.pulse = dk.utils.clamp(self.pulse + self.pulse_correction,self.left_pulse, self.right_pulse)
+        return 
+
+    def run(self, yaw_correction):
+        self.run_threaded(yaw_correction)
         self.controller.set_pulse(self.pulse)
         return self.pulse
 
