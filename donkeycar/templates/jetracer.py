@@ -59,6 +59,7 @@ def drive(cfg,verbose=True):
                 return runstate
             currenttime = time.time()
             if currenttime - self.starttime > 5.0:
+                print ('Running')
                 return 'running'
             else:
                 return 'ready'
@@ -131,7 +132,7 @@ def drive(cfg,verbose=True):
                 if runstate == 'running':  # vehicle running 
                     return True,True,self.cfg.RECORD,True,True,True,runstate
                 else: # vehicle ready waiting for start cmd
-                    return True,True,self.cfg.RECORD,True,True,True,'ready'
+                    return True,True,self.cfg.RECORD,True,True,False,'ready'
                 
 
 
