@@ -162,7 +162,7 @@ def drive(cfg,verbose=True):
         
         V.add(StanleyController(cfg),
             inputs=['inf/framecount','pos/x','pos/y','rpy/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','RUN/State'],
-            outputs=['cam/x','cam/y','plan/yawcorrection','plan/throttle'], run_condition='AI/processing'
+            outputs=['cam/x','cam/y','plan/delta','plan/yawcorrection','plan/throttle'], run_condition='AI/processing'
             )
     
         #Drive train setup
@@ -181,7 +181,7 @@ def drive(cfg,verbose=True):
         V.add(throttle, inputs=['plan/throttle'], outputs=['AI/throttlepulse'],run_condition='AI/running')
         
         V.add(PlanMap(cfg),
-            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/yawcorrection','plan/throttle','AI/steeringpulse','AI/throttlepulse'],
+            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/yawcorrection','plan/throttle','AI/steeringpulse','AI/throttlepulse'],
             outputs=['plan/map'], run_condition='AI/fpv'
             )
             

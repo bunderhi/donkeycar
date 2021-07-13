@@ -393,7 +393,7 @@ class PlanMap(object):
             uv_top_left += [0, h * line_spacing]
 
     
-    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,accel,steering,throttle):
+    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,yawcorrection,accel,steering,throttle):
         cax = math.floor(cx)
         cay = math.floor(cy)
         rax = np.empty_like(rx, dtype=np.int64)
@@ -412,18 +412,19 @@ class PlanMap(object):
             throttletxt = "{:f}".format(throttle)
         else: 
             throttletxt = ' '
-        if delta is not None:
-            deltatxt = "{:.1f}".format(np.degrees(delta))
+        if yawcorrection is not None:
+            correctiontxt = "{:.1f}".format(np.degrees(yawcorrection))
         else: 
-            deltatxt = ' '
+            correctiontxt = ' '
         if accel is not None:
             acceltxt = "{:.1f}".format(accel)
         else: 
             acceltxt = ' '
-        lines = deltatxt + '\n' + acceltxt + '\n' + steeringtxt + '\n' + throttletxt
+        lines = correctiontxt + '\n' + acceltxt + '\n' + steeringtxt + '\n' + throttletxt
         self.draw_text(redmask,text=lines,uv_top_left=(120,200))
-        dy = math.floor(cay - (math.sin(delta) * 100))
-        dx = math.floor(cax - (math.cos(delta) * 100))
+        target = delta - math.pi
+        dy = math.floor(cay + (math.sin(target) * 100))
+        dx = math.floor(cax + (math.cos(target) * 100))
         cv2.arrowedLine(redmask,(cax,cay),(dx,dy),(0, 255, 255), 2, cv2.LINE_AA, 0, 0.1)
         ex = math.floor(cax + (velturn*100.0))
         ey = math.floor(cay + (velfwd*100.0))
