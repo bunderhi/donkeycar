@@ -582,8 +582,7 @@ class FPSTimer(object):
 cv2 write text on image
 """
 
-def draw_text(self,
-    img,
+def draw_text(img,
     *,
     text,
     uv_top_left,
