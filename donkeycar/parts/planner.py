@@ -9,6 +9,7 @@ import numpy as np
 import cv2
 import bisect
 import math
+import donkeycar as dk
 
 class BirdseyeView(object):
     '''
@@ -341,59 +342,9 @@ class PlanMap(object):
         self.fill = np.zeros((2,400,200),dtype=np.uint8)
         self.x = 105.
         self.y = 400.
-    
-    def draw_text(self,
-        img,
-        *,
-        text,
-        uv_top_left,
-        color=(255, 255, 255),
-        fontScale=0.5,
-        thickness=1,
-        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-        outline_color=(0, 0, 0),
-        line_spacing=1.0,
-    ):
-        """
-        Draws multiline with an outline.
-        """
-        assert isinstance(text, str)
-        uv_top_left = np.array(uv_top_left, dtype=float)
-        assert uv_top_left.shape == (2,)
-        for line in text.splitlines():
-            (w, h), _ = cv2.getTextSize(
-                text=line,
-                fontFace=fontFace,
-                fontScale=fontScale,
-                thickness=thickness,
-            )
-            uv_bottom_left_i = uv_top_left + [0, h]
-            org = tuple(uv_bottom_left_i.astype(int))
-            if outline_color is not None:
-                cv2.putText(
-                    img,
-                    text=line,
-                    org=org,
-                    fontFace=fontFace,
-                    fontScale=fontScale,
-                    color=outline_color,
-                    thickness=thickness * 3,
-                    lineType=cv2.LINE_AA,
-                )
-            cv2.putText(
-                img,
-                text=line,
-                org=org,
-                fontFace=fontFace,
-                fontScale=fontScale,
-                color=color,
-                thickness=thickness,
-                lineType=cv2.LINE_AA,
-            )
-            uv_top_left += [0, h * line_spacing]
 
     
-    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,yawcorrection,accel,steering,throttle):
+    def run(self,mask,cx,cy,velturn,velfwd,rx,ry,delta,steeringangle,accel,steering,throttle):
         cax = math.floor(cx)
         cay = math.floor(cy)
         rax = np.empty_like(rx, dtype=np.int64)
@@ -412,8 +363,8 @@ class PlanMap(object):
             throttletxt = "{:f}".format(throttle)
         else: 
             throttletxt = ' '
-        if yawcorrection is not None:
-            correctiontxt = "{:.1f}".format(np.degrees(yawcorrection))
+        if steeringangle is not None:
+            correctiontxt = "{:.1f}".format((steeringangle))
         else: 
             correctiontxt = ' '
         if accel is not None:
@@ -421,7 +372,7 @@ class PlanMap(object):
         else: 
             acceltxt = ' '
         lines = correctiontxt + '\n' + acceltxt + '\n' + steeringtxt + '\n' + throttletxt
-        self.draw_text(redmask,text=lines,uv_top_left=(120,200))
+        dk.utils.draw_text(redmask,text=lines,uv_top_left=(120,200))
         target = delta - math.pi
         dy = math.floor(cay + (math.sin(target) * 100))
         dx = math.floor(cax + (math.cos(target) * 100))

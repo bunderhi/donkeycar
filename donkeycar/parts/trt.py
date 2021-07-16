@@ -88,7 +88,7 @@ class TensorRTSegment(object):
         self.mask = (trt_outputs[0] > 0.4).astype(np.uint8).reshape(160,320)
         self.cfx.pop()
         self.infcount += 1
-        print("inference count",self.infcount)
+        print("do inference: count",self.infcount," on frame",self.framecount)
         return 
     
     def update(self): 
@@ -102,7 +102,7 @@ class TensorRTSegment(object):
             self.inf_inputs = inf_inputs
             self.framecount = framecount
             self.newimage = True
-        print(f'trt framecount {framecount} infcount {self.infcount}')
+        print(f'run trt framecount {framecount} infcount {self.infcount}')
         return self.mask,self.infcount
 
     def shutdown(self):

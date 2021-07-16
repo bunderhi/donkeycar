@@ -162,7 +162,7 @@ def drive(cfg,verbose=True):
         
         V.add(StanleyController(cfg),
             inputs=['inf/framecount','pos/x','pos/y','rpy/yaw','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/pathyaw','plan/speedprofile','RUN/State'],
-            outputs=['cam/x','cam/y','plan/delta','plan/yawcorrection','plan/throttle'], run_condition='AI/processing'
+            outputs=['cam/x','cam/y','plan/delta','plan/steering_angle','plan/throttle'], run_condition='AI/processing'
             )
     
         #Drive train setup
@@ -177,17 +177,17 @@ def drive(cfg,verbose=True):
                                         zero_pulse=cfg.THROTTLE_STOPPED_PWM, 
                                         min_pulse=cfg.THROTTLE_REVERSE_PWM)
 
-        V.add(steering, inputs=['plan/yawcorrection'], outputs=['AI/steeringpulse'],run_condition='AI/running')
+        V.add(steering, inputs=['plan/steering_angle'], outputs=['AI/steeringpulse'],run_condition='AI/running')
         V.add(throttle, inputs=['plan/throttle'], outputs=['AI/throttlepulse'],run_condition='AI/running')
         
         V.add(PlanMap(cfg),
-            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/yawcorrection','plan/throttle','AI/steeringpulse','AI/throttlepulse'],
+            inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/steering_angle','plan/throttle','AI/steeringpulse','AI/throttlepulse'],
             outputs=['plan/map'], run_condition='AI/fpv'
             )
             
     if cfg.AIPILOT:
         #add tub to save AI pilot data
-        tinputs=['cam/fpv','plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/yawcorrection','plan/throttle','AI/steeringpulse','AI/throttlepulse']
+        tinputs=['cam/fpv','plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/steering_angle','plan/throttle','AI/steeringpulse','AI/throttlepulse']
         types=['image_array','image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'int', 'int']
     else:
         #add tub to save manual pilot data

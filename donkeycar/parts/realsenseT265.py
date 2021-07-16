@@ -12,6 +12,7 @@ import cv2
 import os
 from math import tan, pi, asin, atan2
 import pyrealsense2 as rs
+import donkeycar as dk
 
 class RPY:
     def __init__(self, rotation):
@@ -394,14 +395,19 @@ class ImgPreProcess(object):
 
     def run(self, img_arr):
         if img_arr is not None:
+            t0 = time.time()
             self.gray = cv2.cvtColor(img_arr,cv2.COLOR_RGB2GRAY)
             self.crop_img = self.gray[230:550, 130:770]
+            t1 = time.time()
             self.crop_img = self.clahe.apply(self.crop_img)
+            t2 = time.time()
             self.im2 = cv2.resize(self.crop_img,None,fx=0.5,fy=0.5,interpolation=cv2.INTER_AREA)
+            t3 = time.time()
             self.image = cv2.cvtColor(self.im2,cv2.COLOR_GRAY2RGB)
             self.inf_inputs = self.image.transpose(2,0,1).reshape(1,3,160,320)
+            t4 = time.time()
             self.framecount += 1
-            print(f'framecount {self.framecount}')
+            print(f'framecount {self.framecount} crop {t1 - t0} clahe {t2- t1} resize {t3 - t2} reshape {t4 - t3} ')
             return self.image,np.array(self.inf_inputs, dtype=np.float32, order='C')/255,self.framecount
         else:
             return None,None,self.framecount
@@ -418,30 +424,13 @@ class ImgAlphaBlend(object):
             self.alpha = 0.5
         self.beta = (1.0 - self.alpha)
         self.fill = np.zeros((2,160,320),dtype=np.uint8)
-        self.t = time.time()
-        self.camcount = 0
-        self.infcount = 0
-        self.fps = 0
-        self.ips = 0
-        self.timer = cfg.TIMER
 
     def run(self, mask, img, camcount, infcount):
         print(f'alpha framecount {camcount} infcount {infcount}')
+        fctext = f'frame {camcount} \n inf {infcount}'
         red = (mask*255).reshape(1,160,320)
         redmask = np.vstack((self.fill,red)).transpose(1,2,0)
         dst = cv2.addWeighted(redmask, self.alpha, img, self.beta, 0.0)
-        if (self.timer and camcount % 100 == 0 and camcount != 0):
-            e = time.time()
-            inferences = infcount - self.infcount
-            self.fps = round(100.0 / (e - self.t))
-            self.ips = round(inferences / (e - self.t))
-            print(f'fps: {self.fps} ips: {self.ips}')
-            self.infcount = infcount
-            self.t = time.time()
-        if (self.timer):
-            text = f'{self.ips}'          
-            (label_width, label_height), baseline = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
-            y = label_height + baseline + 2
-            dst = cv2.putText(dst,text,(2,y),cv2.FONT_HERSHEY_SIMPLEX,1,(255, 0, 0), 2, cv2.LINE_AA) 
+        dk.utils.draw_text(dst,text=fctext,uv_top_left=(10,10))
         return dst
 

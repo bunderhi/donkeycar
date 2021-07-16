@@ -8,6 +8,7 @@ Ref:
     - [Autonomous Automobile Path Tracking](https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf)
 '''
 import numpy as np
+import math
 
 class StanleyController(object):
 
@@ -19,14 +20,14 @@ class StanleyController(object):
         self.k = 0.5  # control gain
         self.Kp = cfg.KP  # speed proportional gain
         self.Kd = cfg.KD  # speed diferential gain
-        self.Kta = 1.0 # accel to throttle ratio
+        self.Kta = 0.5 # accel to throttle ratio
         self.maxaccel = cfg.MAX_ACCEL
         self.L = 29  # [m] Wheel base of vehicle
         self.x = 0.
         self.y = 0.
         self.camx = 105.
         self.camy = 400.
-        self.yaw = 0. # Current yaw (birdseye frame)
+        self.yaw = -math.pi # Current yaw (birdseye frame)
         self.v = 0.
         self.throttle = 0. # current throttle setting
         self.img_count = 0
@@ -138,7 +139,6 @@ class StanleyController(object):
         
         v = np.abs(np.hypot(velfwd, velturn))
         self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
-        #dt = (timestamp - self.timestamp) / 1000. # dt in seconds  
         
         if runstate == 'running':
             target_idx, _ = self.calc_target_index(rax, ray)
@@ -149,8 +149,9 @@ class StanleyController(object):
             target_speed = 0.0
             delta = np.pi/2
             yaw_correction = 0.0
+        steering_angle = np.pi/2 + yaw_correction
         throttle = self.constant_speed_control(target_speed, v, self.throttle)
-        print(np.arctan2(velfwd, velturn),delta,yaw_correction, v, target_speed, throttle)
+        print(np.arctan2(velfwd, velturn) + np.pi,yaw_correction,delta,steering_angle, v, target_speed, throttle, runstate)
         self.throttle = throttle # for next time around
         self.v = v
-        return self.camx,self.camy,delta,yaw_correction,throttle
+        return self.camx,self.camy,delta,steering_angle,throttle
