@@ -177,8 +177,8 @@ def drive(cfg,verbose=True):
                                         zero_pulse=cfg.THROTTLE_STOPPED_PWM, 
                                         min_pulse=cfg.THROTTLE_REVERSE_PWM)
 
-        V.add(steering, inputs=['plan/steering_angle'], outputs=['AI/steeringpulse'],run_condition='AI/running')
-        V.add(throttle, inputs=['plan/throttle'], outputs=['AI/throttlepulse'],run_condition='AI/running')
+        V.add(steering, inputs=['plan/steering_angle'], outputs=['AI/steeringpulse'],run_condition='AI/processing')
+        V.add(throttle, inputs=['plan/throttle'], outputs=['AI/throttlepulse'],run_condition='AI/processing')
         
         V.add(PlanMap(cfg),
             inputs=['plan/freespace','cam/x','cam/y','vel/turn','vel/fwd','plan/pathx','plan/pathy','plan/delta','plan/steering_angle','plan/throttle','AI/steeringpulse','AI/throttlepulse'],

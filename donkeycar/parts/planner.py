@@ -257,7 +257,7 @@ class PlanPath(object):
     def __init__(self, cfg):
         self.cfg = cfg
         self.waypntx = [100,100,100,100]
-        self.waypntxy = [0,100,200,300]
+        self.waypnty = [400,300,200,100]
         self.rax = []
         self.ray = []
         self.ryaw = []

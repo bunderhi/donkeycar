@@ -22,7 +22,7 @@ class StanleyController(object):
         self.Kd = cfg.KD  # speed diferential gain
         self.Kta = 0.5 # accel to throttle ratio
         self.maxaccel = cfg.MAX_ACCEL
-        self.L = 29  # [m] Wheel base of vehicle
+        self.L = 30  # [m] Wheel base of vehicle
         self.x = 0.
         self.y = 0.
         self.camx = 105.
@@ -71,11 +71,11 @@ class StanleyController(object):
             current_target_idx = last_target_idx
 
         # theta_e corrects the heading error
-        theta_e = self.normalize_angle(cyaw[current_target_idx] - self.yaw)
+        theta_e = cyaw[current_target_idx] - self.yaw #self.normalize_angle(cyaw[current_target_idx] - self.yaw)
         # theta_d corrects the cross track error
-        theta_d = np.arctan2(self.k * error_front_axle, v)
+        # theta_d = np.arctan2(self.k * error_front_axle, v)
         # Steering control
-        delta = theta_e + theta_d
+        delta = theta_e # + theta_d
         
         return delta, current_target_idx
 
@@ -138,20 +138,20 @@ class StanleyController(object):
             print(f'reuse situation {self.camx},{self.camy}')
         
         v = np.abs(np.hypot(velfwd, velturn))
-        self.yaw = np.arctan2(velfwd, velturn) - (np.pi / 2.)
+        self.yaw = -np.pi/2  #np.arctan2(velfwd, velturn) - (np.pi / 2.)
         
         if runstate == 'running':
             target_idx, _ = self.calc_target_index(rax, ray)
             target_speed = speedprofile[target_idx]
             delta, target_idx = self.stanley_control(rax, ray, ryaw, v, target_idx)
-            yaw_correction = delta - (np.arctan2(velfwd, velturn) + np.pi)
+            # yaw_correction = delta - (np.arctan2(velfwd, velturn) + np.pi)
         else: # if the car is not in a running state keep it stopped
             target_speed = 0.0
-            delta = np.pi/2
-            yaw_correction = 0.0
-        steering_angle = np.pi/2 + yaw_correction
+            delta = 0.0
+            # yaw_correction = 0.0
+        steering_angle = self.yaw + delta + np.pi
         throttle = self.constant_speed_control(target_speed, v, self.throttle)
-        print(np.arctan2(velfwd, velturn) + np.pi,yaw_correction,delta,steering_angle, v, target_speed, throttle, runstate)
+        print(delta,steering_angle, v, target_speed, throttle, runstate)
         self.throttle = throttle # for next time around
         self.v = v
         return self.camx,self.camy,delta,steering_angle,throttle
