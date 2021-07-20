@@ -188,7 +188,7 @@ def drive(cfg,verbose=True):
     if cfg.AIPILOT:
         #add tub to save AI pilot data
         tinputs=['cam/fpv','plan/map','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw','plan/delta','plan/steering_angle','plan/throttle','AI/steeringpulse','AI/throttlepulse']
-        types=['image_array','image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'int', 'int']
+        types=['image_array','image_array', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'int', 'int']
     else:
         #add tub to save manual pilot data
         tinputs=['cam/raw','pos/x','pos/y','pos/z','vel/turn','vel/fwd','rpy/yaw']
